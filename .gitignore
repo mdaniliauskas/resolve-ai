@@ -41,6 +41,7 @@ coverage.xml
 # The data/ folder structure IS tracked via .gitkeep files.
 data/cdc/*.txt
 data/cdc/*.pdf
+data/cdc/*.html
 
 # ChromaDB stores embeddings locally — binary, large, and environment-specific.
 # Re-generate with: uv run python -m rag.ingest
