@@ -1,0 +1,64 @@
+# =============================================================================
+# Resolve Aí — .gitignore
+#
+# Strategy:
+#   EXPOSE  → All source code, architecture, prompts, tests, config structure.
+#             Anyone cloning this repo should understand the full system.
+#   PROTECT → Secrets, large data files, local caches, and generated artifacts.
+#             The app cannot run without your own API keys and a locally
+#             generated vector database — those are never committed.
+# =============================================================================
+
+# --- Secrets & Environment -----------------------------------------------
+# Never commit real credentials. Use .env.example as the documented template.
+.env
+.env.local
+.env.*.local
+
+# --- Python Environment --------------------------------------------------
+# UV-managed virtual environment — reproducibility comes from uv.lock, not .venv
+.venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# --- Tooling Caches -------------------------------------------------------
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.hypothesis/
+htmlcov/
+.coverage
+coverage.xml
+
+# --- Data & Vector Store --------------------------------------------------
+# Source documents (large PDFs/TXTs downloaded at setup time).
+# The data/ folder structure IS tracked via .gitkeep files.
+data/cdc/*.txt
+data/cdc/*.pdf
+
+# ChromaDB stores embeddings locally — binary, large, and environment-specific.
+# Re-generate with: uv run python -m rag.ingest
+data/chroma_db/
+
+# --- Logs -----------------------------------------------------------------
+*.log
+logs/
+
+# --- IDE & OS Artifacts ---------------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Docker ---------------------------------------------------------------
+# Compose override files for local tweaks (keep the base docker-compose.yml)
+docker-compose.override.yml
