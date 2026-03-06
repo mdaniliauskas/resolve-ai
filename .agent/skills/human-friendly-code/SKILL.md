@@ -67,6 +67,14 @@ else:
 - Standard library > third-party > custom implementation.
 - When using a framework, follow its conventions — don't fight the framework.
 
+### 1.5 Latest Stable Versions
+- Always prefer the **latest stable release** of libraries, frameworks, APIs, and tools.
+- When adding a dependency, check PyPI / npm for the current version — don't copy old examples.
+- When calling external APIs or SDKs, verify the **current recommended patterns** in official docs.
+  Old tutorials and Stack Overflow answers often use deprecated methods.
+- Pin versions with `>=` in `pyproject.toml` to get latest compatible; rely on `uv.lock` for reproducibility.
+- Periodically run `uv lock --upgrade` to pick up patches and minor releases.
+
 ---
 
 ## 2. File & Folder Structure Rules

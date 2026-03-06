@@ -60,6 +60,10 @@ logs/
 Thumbs.db
 desktop.ini
 
+# --- Personal Study Notes -------------------------------------------------
+# Private learning materials — not part of the project source.
+estudos/
+
 # --- Docker ---------------------------------------------------------------
 # Compose override files for local tweaks (keep the base docker-compose.yml)
 docker-compose.override.yml
