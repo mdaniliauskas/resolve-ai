@@ -24,7 +24,7 @@ Brazilian consumers frequently **don't know whether their issue is covered by th
 ## Architecture
 
 ```
-User → Chat Interface (Next.js)
+User → Chat Interface (Gradio)
              │
              ▼
        FastAPI REST API
@@ -51,13 +51,13 @@ User → Chat Interface (Next.js)
 
 | Layer | Technology |
 |---|---|
-| **LLM** | Gemini 1.5 Flash (Vertex AI / direct API) |
+| **LLM** | Gemini 3.1 Flash Lite (Google GenAI SDK) |
 | **Agent Orchestration** | LangGraph |
-| **RAG / Embeddings** | LlamaIndex + ChromaDB (dev) → Vertex AI Vector Search (prod) |
+| **RAG / Embeddings** | ChromaDB + all-MiniLM-L6-v2 |
 | **Backend** | Python 3.12 + FastAPI |
-| **Frontend** | Next.js |
+| **Frontend** | Gradio 6 |
 | **Package Manager** | UV |
-| **Deploy** | Docker + Google Cloud Run |
+| **Deploy** | Docker + Google Cloud Run (planned) |
 
 ---
 
@@ -66,27 +66,24 @@ User → Chat Interface (Next.js)
 ```
 resolve-ai/
 ├── agents/                  # AI agents (LangGraph nodes)
+│   ├── llm_client.py        # Centralized Gemini SDK wrapper
 │   ├── orchestrator.py      # Intent classification and routing
 │   ├── legal_analysis.py    # CDC article identification via RAG
 │   ├── strategy.py          # Resolution channel planning
-│   └── response.py          # Final response formatting
+│   ├── response.py          # Final response formatting
+│   └── workflow.py          # LangGraph StateGraph orchestration
 ├── rag/                     # RAG pipeline
 │   ├── ingest.py            # Document ingestion (download → chunk → embed → index)
 │   └── retrieval.py         # Similarity search + re-ranking
 ├── api/                     # FastAPI backend
 │   ├── main.py              # App entry point + middleware
 │   └── routes.py            # /api/chat, /api/health endpoints
-├── frontend/                # Next.js chat interface
+├── frontend/                # Gradio chat interface
+│   └── app.py               # Chat UI with legal disclaimer
 ├── data/
 │   └── cdc/                 # CDC source documents (downloaded at setup, not committed)
-├── tests/                   # Unit + integration tests
-├── projetos/resolve-ai/     # Full project documentation
-│   ├── ARCHITECTURE.md
-│   ├── MVP_SPEC.md
-│   ├── TECH_DECISIONS.md    # Architecture Decision Records (ADRs)
-│   ├── DEVELOPMENT_GUIDE.md
-│   ├── ROADMAP.md
-│   └── ...
+├── tests/                   # Unit + integration tests (32 tests)
+├── evaluation/              # Golden test set (10 CDC scenarios)
 ├── config.py                # Single source of configuration (reads from .env)
 ├── pyproject.toml           # Dependencies (managed with UV)
 └── .env.example             # Environment variable template
@@ -106,7 +103,7 @@ resolve-ai/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/resolve-ai.git
+git clone https://github.com/mdaniliauskas/resolve-ai.git
 cd resolve-ai
 
 # 2. Install dependencies (UV creates the virtualenv automatically)
@@ -114,11 +111,18 @@ uv sync
 
 # 3. Configure environment
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your GOOGLE_API_KEY
 
-# 4. Verify setup
+# 4. Start the chat interface
+uv run python frontend/app.py
+# → http://localhost:7860
+
+# Or start the API only
 uv run uvicorn api.main:app --reload
 # → http://localhost:8000/docs
+
+# Run tests
+uv run pytest -v
 ```
 
 > Full setup guide → [`projetos/resolve-ai/SETUP.md`](./projetos/resolve-ai/SETUP.md)
@@ -140,11 +144,13 @@ uv run uvicorn api.main:app --reload
 
 ## Project Status
 
-**Current phase:** Pre-MVP (planning and documentation complete)
+**Current phase:** MVP (Sprint 3 complete ✅)
 
 | Phase | Status | Description |
 |---|:---:|---|
-| **MVP** | 🔲 In progress | Chat + CDC RAG + Legal analysis + Guidance |
+| **Sprint 1** | ✅ Done | Project scaffold, RAG pipeline, golden test set (70% precision) |
+| **Sprint 2** | ✅ Done | Multi-agent pipeline (orchestrator, legal, strategy, response) |
+| **Sprint 3** | ✅ Done | Gradio chat UI, legal disclaimer, README polish |
 | **Enrichment** | 🔲 Planned | Case law + Advanced strategy + History + PDF |
 | **Scale** | 🔲 Planned | gov.br integration + Auto-generated letters + Mobile |
 

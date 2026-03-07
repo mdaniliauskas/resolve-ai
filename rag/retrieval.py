@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 COLLECTION_NAME = "cdc_articles"
 
 # Retrieval parameters (from MVP_SPEC.md)
-DEFAULT_TOP_K = 5
+DEFAULT_TOP_K = 7
 # NOTE: Threshold is calibrated for L2 distance with all-MiniLM-L6-v2 (dev).
 # Portuguese legal text scores ~0.45-0.55 similarity with this model.
 # Re-calibrate when switching to Gemini text-embedding-004 (production).
