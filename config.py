@@ -19,8 +19,8 @@ class Settings(BaseSettings):
 
     # LLM provider: "gemini" or "ollama"
     llm_provider: str = "gemini"
-    gemini_api_key: str = ""
-    gemini_model: str = "gemini-1.5-flash"
+    google_api_key: str = ""
+    gemini_model: str = "gemini-3.1-flash-lite-preview"
 
     # Ollama (local development)
     ollama_base_url: str = "http://localhost:11434"
