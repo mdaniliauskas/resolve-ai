@@ -51,13 +51,13 @@ User → Chat Interface (Gradio)
 
 | Layer | Technology |
 |---|---|
-| **LLM** | Gemini 3.1 Flash Lite (Google GenAI SDK) |
+| **LLM** | Gemini 3.1 Flash Lite (Google GenAI SDK `google-genai`) |
 | **Agent Orchestration** | LangGraph |
-| **RAG / Embeddings** | ChromaDB + all-MiniLM-L6-v2 |
+| **RAG / Embeddings** | ChromaDB + `gemini-embedding-001` (Cosine Distance) |
 | **Backend** | Python 3.12 + FastAPI |
 | **Frontend** | Gradio 6 |
 | **Package Manager** | UV |
-| **Deploy** | Docker + Google Cloud Run (planned) |
+| **Deploy** | Docker + Google Cloud Run (Safeguarded) |
 
 ---
 
@@ -86,6 +86,8 @@ resolve-ai/
 ├── evaluation/              # Golden test set (10 CDC scenarios)
 ├── config.py                # Single source of configuration (reads from .env)
 ├── pyproject.toml           # Dependencies (managed with UV)
+├── Dockerfile               # Production container image setup
+├── deploy.md                # Cloud Run deployment instructions and safeguards
 └── .env.example             # Environment variable template
 ```
 
@@ -113,7 +115,7 @@ uv sync
 cp .env.example .env
 # Edit .env with your GOOGLE_API_KEY
 
-# 4. Start the chat interface
+# 4. Start the chat interface (uses Auth: visitante/resolveai)
 uv run python frontend/app.py
 # → http://localhost:7860
 
@@ -144,14 +146,15 @@ uv run pytest -v
 
 ## Project Status
 
-**Current phase:** MVP (Sprint 3 complete ✅)
+**Current phase:** Enriched & Deployed (Sprint 6 complete ✅)
 
 | Phase | Status | Description |
 |---|:---:|---|
-| **Sprint 1** | ✅ Done | Project scaffold, RAG pipeline, golden test set (70% precision) |
+| **Sprint 1** | ✅ Done | Project scaffold, RAG pipeline, golden test set |
 | **Sprint 2** | ✅ Done | Multi-agent pipeline (orchestrator, legal, strategy, response) |
 | **Sprint 3** | ✅ Done | Gradio chat UI, legal disclaimer, README polish |
-| **Enrichment** | 🔲 Planned | Case law + Advanced strategy + History + PDF |
+| **Sprint 4 (RAG)** | ✅ Done | Migrated to `gemini-embedding-001` (90% Precision Score) |
+| **Sprint 5 (Deploy)** | ✅ Done | Google Cloud Run Deploy + Safeguards (Auth & Token Caps) |
 | **Scale** | 🔲 Planned | gov.br integration + Auto-generated letters + Mobile |
 
 ---

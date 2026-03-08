@@ -76,7 +76,7 @@ pydantic==2.*
 langgraph==0.4.*
 langchain==0.3.*
 langchain-google-genai==2.*
-google-generativeai==0.8.*
+google-genai==1.*
 
 # RAG
 llama-index==0.12.*
@@ -241,9 +241,9 @@ npm install
 npm run dev
 ```
 
-O frontend estará disponível em `http://localhost:3000`.
+O frontend (temporário) estaria em `http://localhost:3000`.
 
-> ⚠️ **Para o MVP:** O frontend pode ser um chat simples. Não invista muito tempo na UI antes do backend funcionar. Um `<textarea>` + botão "Enviar" + área de resposta é suficiente para validar o fluxo.
+> ⚠️ **Nota Histórica:** Na Sprint 3, pivotamos o desenvolvimento do Chat UI inteiramente para **Gradio 6**, para agilizar o MVP. O React/Next.js será reintroduzido na **Fase 3 (Escala)**.
 
 ---
 
@@ -321,8 +321,11 @@ print(model.generate_content('Diga olá').text)
 "
 
 # 5. Frontend
-cd frontend && npm run dev
-# → http://localhost:3000
+# Nota: O MVP possui uma trava de segurança. O login padrão é visitante / resolveai
+# Se quiser customizar, passe a variável de ambiente:
+# export GRADIO_AUTH="usuario:senha"
+uv run python frontend/app.py
+# → http://localhost:7860
 
 # 6. Testes
 pytest tests/ -v
