@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 _client = genai.Client(api_key=settings.google_api_key)
 
 
-def generate(prompt: str, *, temperature: float = 0.2) -> str:
+def generate(prompt: str, *, temperature: float = 0.2, max_output_tokens: int = 800) -> str:
     """Send a prompt to Gemini and return the text response.
 
     Uses low temperature by default for more deterministic outputs,
@@ -32,7 +32,10 @@ def generate(prompt: str, *, temperature: float = 0.2) -> str:
     response = _client.models.generate_content(
         model=settings.gemini_model,
         contents=prompt,
-        config={"temperature": temperature},
+        config={
+            "temperature": temperature,
+            "max_output_tokens": max_output_tokens,
+        },
     )
     elapsed_ms = (time.perf_counter() - start) * 1000
 
@@ -44,5 +47,6 @@ def generate(prompt: str, *, temperature: float = 0.2) -> str:
         settings.gemini_model,
         len(prompt),
         len(text),
+        max_output_tokens,
     )
     return text

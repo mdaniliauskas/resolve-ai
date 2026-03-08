@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import logging
 
 import gradio as gr
+import os
 
 from agents.workflow import run_chat
 
@@ -100,4 +101,19 @@ with gr.Blocks(title="Resolve Aí — Assistente do Consumidor") as app:
 
 
 if __name__ == "__main__":
-    app.launch(server_name="0.0.0.0", server_port=7860, theme=THEME)
+    # Get auth from environment or use a default simple password for MVP
+    auth_credentials = None
+    env_auth = os.environ.get("GRADIO_AUTH")
+    if env_auth:
+        user, pwd = env_auth.split(":")
+        auth_credentials = (user, pwd)
+    else:
+        auth_credentials = ("visitante", "resolveai")
+        
+    app.launch(
+        server_name="0.0.0.0", 
+        server_port=7860, 
+        theme=THEME,
+        auth=auth_credentials,
+        max_threads=10
+    )
