@@ -14,6 +14,7 @@ import chromadb
 from pydantic import BaseModel
 
 from config import settings
+from rag.embedder import gemini_embedder
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +22,9 @@ COLLECTION_NAME = "cdc_articles"
 
 # Retrieval parameters (from MVP_SPEC.md)
 DEFAULT_TOP_K = 7
-# NOTE: Threshold is calibrated for L2 distance with all-MiniLM-L6-v2 (dev).
-# Portuguese legal text scores ~0.45-0.55 similarity with this model.
-# Re-calibrate when switching to Gemini text-embedding-004 (production).
-SCORE_THRESHOLD = 0.3
+# NOTE: Threshold is calibrated for cosine distance with Gemini's text-embedding-004.
+# High-dimensional embeddings usually present high cosine similarities (0.6 ~ 0.8+).
+SCORE_THRESHOLD = 0.6
 
 
 class RetrievedChunk(BaseModel):
@@ -49,7 +49,10 @@ def retrieve(query: str, top_k: int = DEFAULT_TOP_K) -> list[RetrievedChunk]:
     client = chromadb.PersistentClient(path=settings.chroma_persist_dir)
 
     try:
-        collection = client.get_collection(COLLECTION_NAME)
+        collection = client.get_collection(
+            name=COLLECTION_NAME,
+            embedding_function=gemini_embedder,
+        )
     except ValueError:
         logger.error(
             "Collection '%s' not found. Run 'uv run python -m rag.ingest' first.",
@@ -66,10 +69,9 @@ def retrieve(query: str, top_k: int = DEFAULT_TOP_K) -> list[RetrievedChunk]:
         results["distances"][0],
         strict=False,
     ):
-        # ChromaDB default distance is L2; convert to similarity score (0-1 range)
-        # For cosine distance: similarity = 1 - distance/2
-        # For L2 distance: we use a simple inverse scaling
-        score = max(0.0, 1.0 - distance / 2.0)
+        # ChromaDB configured for 'cosine' returns cosine distance.
+        # similarity = 1 - distance
+        score = max(0.0, 1.0 - distance)
 
         if score < SCORE_THRESHOLD:
             logger.debug("Skipping chunk (score %.3f < threshold %.2f)", score, SCORE_THRESHOLD)

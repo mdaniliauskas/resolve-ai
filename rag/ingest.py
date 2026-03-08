@@ -16,6 +16,7 @@ from pathlib import Path
 import chromadb
 
 from config import settings
+from rag.embedder import gemini_embedder
 
 logger = logging.getLogger(__name__)
 
@@ -161,10 +162,14 @@ def index_chunks(chunks: list[CDCChunk]) -> chromadb.Collection:
 
     collection = client.create_collection(
         name=COLLECTION_NAME,
-        metadata={"description": "CDC - Código de Defesa do Consumidor (Lei 8.078/1990)"},
+        embedding_function=gemini_embedder,
+        metadata={
+            "description": "CDC - Código de Defesa do Consumidor (Lei 8.078/1990)",
+            "hnsw:space": "cosine",
+        },
     )
 
-    # ChromaDB uses all-MiniLM-L6-v2 by default — perfect for dev
+    # ChromaDB will use gemini_embedder
     collection.add(
         ids=[f"cdc-chunk-{c.chunk_index}" for c in chunks],
         documents=[c.text for c in chunks],
