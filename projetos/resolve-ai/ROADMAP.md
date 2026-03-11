@@ -74,14 +74,14 @@ Fase 3: Escala ────────── Integrações + Cartas + Painel + 
 
 > **Objetivo:** Melhorar a qualidade das respostas, adicionar funcionalidades de retenção e valor.
 
-### Sprint 4: RAG Avançado
+### Sprint 4: RAG Avançado (Concluída ✅)
 
 | Tarefa | Componente | Critério de Aceite |
 |--------|:----------:|--------------------|
-| Atualizar Embeddings (Google GenAI) | RAG | `gemini-embedding-001` implantado e testado (Concluído) |
-| Re-ranking de resultados | RAG | Threshold `cosine` e score adaptados (Concluído) |
-| Adicionar jurisprudência ao RAG (STJ) | RAG | ≥ 20 decisões relevantes indexadas |
-| Avaliação RAGAS completa | Evaluation | 4 métricas medidas e documentadas |
+| Atualizar Embeddings (Google GenAI) | RAG | `gemini-embedding-001` implantado e testado (Concluído ✅) |
+| Re-ranking de resultados | RAG | Threshold `cosine` e score adaptados (Concluído ✅) |
+| Adicionar jurisprudência ao RAG (STJ) | RAG | ≥ 20 decisões relevantes indexadas (Concluído ✅) |
+| Avaliação RAGAS completa | Evaluation | 4 métricas medidas e documentadas (Concluído ✅) |
 
 ### Sprint 5: Funcionalidades
 

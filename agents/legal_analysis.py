@@ -16,26 +16,28 @@ from rag.retrieval import RetrievedChunk
 logger = logging.getLogger(__name__)
 
 ANALYSIS_PROMPT = """\
-Você é um especialista em Direito do Consumidor brasileiro com profundo conhecimento \
-do Código de Defesa do Consumidor (Lei 8.078/1990).
+Você é um especialista em Direito do Consumidor brasileiro com profundo conhecimento \\
+do Código de Defesa do Consumidor (Lei 8.078/1990) e da jurisprudência do STJ.
 
-Com base no contexto jurídico abaixo e na situação descrita pelo consumidor, determine:
+Com base no contexto jurídico abaixo (Artigos do CDC e precedentes do STJ) e na situação \\
+descrita pelo consumidor, determine:
 
 1. Se a situação se enquadra no CDC (sim/não)
 2. Quais artigos são aplicáveis (liste os números e títulos)
-3. Quais direitos o consumidor possui neste caso
-4. A gravidade do caso: "low" (inconveniente menor), "medium" (prejuízo moderado), \
+3. Quais súmulas ou temas do STJ são relevantes para o caso
+4. Quais direitos o consumidor possui neste caso
+5. A gravidade do caso: "low" (inconveniente menor), "medium" (prejuízo moderado), \\
 "high" (dano significativo)
-5. Sua confiança na análise (0.0 a 1.0)
+6. Sua confiança na análise (0.0 a 1.0)
 
-## Contexto Jurídico (CDC):
+## Contexto Jurídico (CDC e Jurisprudência):
 {rag_context}
 
 ## Situação do Consumidor:
 {user_message}
 
 ## Instruções:
-- Cite artigos específicos (ex: "Art. 18, §1º")
+- Cite artigos específicos (ex: "Art. 18, §1º") e Súmulas do STJ (ex: "Súmula 130")
 - Se não houver enquadramento claro, explique por quê
 - Se a confiança for menor que 0.6, recomende consultar um advogado
 - Responda SOMENTE com JSON válido, sem markdown
@@ -45,6 +47,9 @@ Com base no contexto jurídico abaixo e na situação descrita pelo consumidor, 
   "is_cdc_case": true,
   "articles": [
     {{"number": "Art. X", "title": "...", "relevance": "..."}}
+  ],
+  "precedents": [
+    {{"reference": "Súmula X", "summary": "..."}}
   ],
   "rights": ["Direito 1", "Direito 2"],
   "severity": "low",
@@ -65,11 +70,19 @@ class ArticleDetail(BaseModel):
     relevance: str
 
 
+class PrecedentDetail(BaseModel):
+    """An STJ precedent (Súmula or Case) identified as relevant."""
+
+    reference: str
+    summary: str
+
+
 class LegalAnalysisResult(BaseModel):
     """Structured output from the legal analysis agent."""
 
     is_cdc_case: bool = False
     articles: list[ArticleDetail] = []
+    precedents: list[PrecedentDetail] = []
     rights: list[str] = []
     severity: str = "low"
     confidence: float = 0.0
@@ -104,9 +117,9 @@ def _format_rag_context(chunks: list[RetrievedChunk]) -> str:
 
     parts = []
     for i, chunk in enumerate(chunks, 1):
-        header = f"[Trecho {i}]"
-        if chunk.articles:
-            header += f" ({chunk.articles})"
+        source = chunk.source_type.upper()
+        ref = chunk.reference
+        header = f"[Trecho {i}] Source: {source} | Ref: {ref}"
         parts.append(f"{header}\n{chunk.text}")
     return "\n\n---\n\n".join(parts)
 

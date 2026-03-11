@@ -14,9 +14,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import logging
+import os
 
 import gradio as gr
-import os
 
 from agents.workflow import run_chat
 
@@ -54,6 +54,11 @@ def respond(message: str, history: list) -> str:
         response_parts.append("\n\n---\n📋 **Artigos do CDC identificados:**")
         for article in analysis.articles:
             response_parts.append(f"- **{article.number}** — {article.title}")
+
+    if analysis and analysis.precedents:
+        response_parts.append("\n⚖️ **Jurisprudência (STJ):**")
+        for prec in analysis.precedents:
+            response_parts.append(f"- **{prec.reference}**: {prec.summary}")
 
     sources = result.get("sources", [])
     if sources:
@@ -110,9 +115,12 @@ if __name__ == "__main__":
     else:
         auth_credentials = ("visitante", "resolveai")
         
+    # Cloud Run expects the app to listen on the port defined in the PORT environment variable
+    port = int(os.environ.get("PORT", os.environ.get("GRADIO_SERVER_PORT", 7860)))
+    
     app.launch(
         server_name="0.0.0.0", 
-        server_port=7860, 
+        server_port=port, 
         theme=THEME,
         auth=auth_credentials,
         max_threads=10

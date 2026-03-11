@@ -6,9 +6,12 @@ Google's text-embedding-004 via the google-genai SDK.
 """
 
 from typing import cast
+
 from chromadb import Documents, EmbeddingFunction, Embeddings
 from google import genai
+
 from config import settings
+
 
 class GeminiEmbeddingFunction(EmbeddingFunction[Documents]):
     """ChromaDB embedding function using Google's Gemini models."""

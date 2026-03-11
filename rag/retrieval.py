@@ -28,11 +28,12 @@ SCORE_THRESHOLD = 0.6
 
 
 class RetrievedChunk(BaseModel):
-    """A chunk retrieved from the CDC vector store with its similarity score."""
+    """A chunk retrieved from the vector store with its similarity score."""
 
     text: str
     score: float
-    articles: str = ""
+    source_type: str = "cdc"
+    reference: str = ""  # Article number or Súmula number
     titulo: str = ""
     capitulo: str = ""
     secao: str = ""
@@ -80,7 +81,8 @@ def retrieve(query: str, top_k: int = DEFAULT_TOP_K) -> list[RetrievedChunk]:
         chunks.append(RetrievedChunk(
             text=doc,
             score=round(score, 4),
-            articles=meta.get("articles", ""),
+            source_type=meta.get("source_type", "cdc"),
+            reference=meta.get("reference") or meta.get("articles", ""),
             titulo=meta.get("titulo", ""),
             capitulo=meta.get("capitulo", ""),
             secao=meta.get("secao", ""),

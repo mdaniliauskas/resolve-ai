@@ -114,13 +114,13 @@ def evaluate_retrieval(top_k: int = 5) -> dict:
         chunks = retrieve(case.query, top_k=top_k)
 
         # Check if the expected article appears in any of the retrieved chunks
-        all_articles_text = " ".join(c.articles for c in chunks)
+        all_articles_text = " ".join(c.reference for c in chunks)
         hit = case.expected_article in all_articles_text
 
         # Find the best matching chunk's position (1-indexed)
         hit_position = None
         for i, chunk in enumerate(chunks):
-            if case.expected_article in chunk.articles:
+            if case.expected_article in chunk.reference:
                 hit_position = i + 1
                 break
 

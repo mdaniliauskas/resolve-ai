@@ -1,0 +1,20 @@
+
+========================================================================
+  GOLDEN TEST SET -- Retrieval Quality Report
+========================================================================
+  [ 1] [HIT]  (position 1)    | Art. 18  | Produto com defeito dentro da garantia
+  [ 2] [HIT]  (position 3)    | Art. 42  | Cobrança indevida no cartão de crédito
+  [ 3] [HIT]  (position 5)    | Art. 37  | Propaganda enganosa
+  [ 4] [HIT]  (position 1)    | Art. 20  | Serviço não prestado após pagamento
+  [ 5] [HIT]  (position 1)    | Art. 49  | Negativa de cancelamento de contrato
+  [ 6] [MISS]                 | Art. 35  | Descumprimento de oferta/promoção
+  [ 7] [HIT]  (position 3)    | Art. 12  | Produto perigoso causou dano à saúde
+  [ 8] [HIT]  (position 1)    | Art. 51  | Cláusula abusiva em contrato
+  [ 9] [HIT]  (position 1)    | Art. 49  | Recusa de troca em compra online (7 dias)
+  [10] [HIT]  (position 1)    | Art. 43  | Negativação indevida (SPC/Serasa)
+------------------------------------------------------------------------
+  Precision: 9/10 = 90%
+  Target:    70%
+  Status:    PASS
+========================================================================
+

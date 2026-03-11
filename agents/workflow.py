@@ -53,6 +53,7 @@ class ChatResult(TypedDict):
     response: str
     analysis: LegalAnalysisResult | None
     strategy: StrategyResult | None
+    rag_chunks: list[RetrievedChunk]
     sources: list[str]
     metadata: dict
 
@@ -175,11 +176,13 @@ def run_chat(message: str) -> ChatResult:
     # Build source list from RAG chunks
     sources = []
     for chunk in rag_chunks:
-        label = f"CDC {chunk.articles}" if chunk.articles else "CDC"
-        if chunk.secao:
-            label += f" - {chunk.secao}"
-        elif chunk.capitulo:
-            label += f" - {chunk.capitulo}"
+        source_name = "CDC" if chunk.source_type == "cdc" else "STJ"
+        label = f"{source_name} {chunk.reference}" if chunk.reference else source_name
+        if chunk.source_type == "cdc":
+            if chunk.secao:
+                label += f" - {chunk.secao}"
+            elif chunk.capitulo:
+                label += f" - {chunk.capitulo}"
         sources.append(label)
 
     logger.info(
@@ -193,6 +196,7 @@ def run_chat(message: str) -> ChatResult:
         response=final_state.get("final_response", ""),
         analysis=analysis,
         strategy=strategy,
+        rag_chunks=rag_chunks,
         sources=sources,
         metadata={
             "intent": final_state.get("intent", ""),
