@@ -92,7 +92,7 @@ Fase 3: Escala ────────── Integrações + Cartas + Painel + 
 | Agente de Estratégia avançado | Agents | Priorização por tipo de empresa e gravidade |
 | Observabilidade (LangSmith ou logging) | Infra | Traces de cada request visíveis |
 
-### Sprint 6: Deploy e Produção
+### Sprint 6: Deploy e Produção (Concluída ✅)
 
 | Tarefa | Componente | Critério de Aceite |
 |--------|:----------:|--------------------|
@@ -152,12 +152,12 @@ Semana 9-10 │ Sprint 5-6   │ Capstone + Prep entrevista │ Deploy Cloud Run
 
 ## Priorização (MoSCoW)
 
-| Prioridade | Feature |
-|:----------:|---------|
-| **Must** | Chat + RAG CDC + Análise jurídica + Encaminhamento |
-| **Should** | Avaliação RAGAS + Deploy Cloud Run + Testes |
-| **Could** | Jurisprudência + PDF + Histórico |
-| **Won't (agora)** | Mobile + Auth + Integrações externas |
+| Prioridade | Feature | Status |
+|:----------:|---------|---------|
+| **Must** | Chat + RAG CDC + Análise jurídica + Encaminhamento | ✅ Done |
+| **Should** | Avaliação RAGAS + Deploy Cloud Run + Testes | ✅ Done |
+| **Could** | Jurisprudência STJ + PDF + Histórico | STJ ✅ / PDF e Histórico 🔲 |
+| **Won't (agora)** | Mobile + Auth de usuário + Integrações externas | 🔲 |
 
 ---
 

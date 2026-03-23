@@ -4,20 +4,24 @@
 
 ---
 
-## ADR-001: LLM — Gemini 1.5 Flash
+## ADR-001: LLM — Gemini 3.1 Flash Lite
 
 ### Contexto
-Precisamos de um LLM para os agentes (análise jurídica, estratégia, resposta). As opções principais são: GPT-4o (OpenAI), Claude 3.5 (Anthropic), Gemini 1.5 (Google), ou modelos open-source via Ollama.
+Precisamos de um LLM para os agentes (análise jurídica, estratégia, resposta). As opções principais são: GPT-4o (OpenAI), Claude 3.5 (Anthropic), Gemini (Google), ou modelos open-source via Ollama.
 
 ### Decisão
-**Gemini 1.5 Flash** como LLM principal, com **Ollama (llama3.2)** para desenvolvimento local.
+**Gemini 3.1 Flash Lite** como LLM principal via SDK `google-genai`, com **Ollama (llama3.2)** como fallback para desenvolvimento local offline.
+
+### Evolução
+- Inicialmente planejado Gemini 1.5 Flash via Vertex AI.
+- Migrado para **Gemini 3.1 Flash Lite** via SDK `google-genai` (mais direto, sem overhead do Vertex AI para o MVP).
+- O wrapper `llm_client.py` abstrai o provider, permitindo troca via `LLM_PROVIDER=gemini|ollama`.
 
 ### Justificativa
 - ✅ Créditos Google Cloud disponíveis (custo zero para dev/staging)
-- ✅ Gemini Flash é otimizado para throughput (rápido e barato)
-- ✅ Integração nativa com Vertex AI (deploy facilitado)
+- ✅ Flash Lite otimizado para throughput (rápido e barato)
+- ✅ SDK `google-genai` mais simples que Vertex AI para o contexto do MVP
 - ✅ Suporte a português excelente
-- ✅ Demonstra domínio do ecossistema Google (diferencial para portfólio)
 - ✅ Ollama para dev local = zero custo no dia a dia
 
 ### Alternativas rejeitadas
@@ -26,13 +30,14 @@ Precisamos de um LLM para os agentes (análise jurídica, estratégia, resposta)
 | GPT-4o | Sem créditos, custo alto para MVP |
 | Claude 3.5 | Sem créditos, embora seja muito bom para texto jurídico |
 | Ollama-only | Qualidade inferior para análise jurídica em português |
+| Vertex AI SDK | Overhead de setup desnecessário para o MVP |
 
 ### Consequências
-- Código deve ter abstração para trocar o LLM provider (`LLM_PROVIDER=gemini|ollama`)
+- Código tem abstração para trocar provider (`LLM_PROVIDER=gemini|ollama` em `config.py`)
 - Testes de qualidade devem rodar com Gemini (não Ollama)
-- Lock-in mínimo se usar LangChain/LangGraph como abstração
+- Lock-in mínimo via wrapper `llm_client.py`
 
-### Status: ✅ Aprovado
+### Status: ✅ Aprovado e implementado
 
 ---
 
@@ -68,33 +73,39 @@ Precisamos de um framework para orquestrar os 4 agentes. Opções: LangGraph, Cr
 
 ---
 
-## ADR-003: Vector Store — ChromaDB (dev) + Vertex AI Vector Search (prod)
+## ADR-003: Vector Store — ChromaDB (dev e produção)
 
 ### Contexto
-Precisamos de um vector store para armazenar embeddings do CDC. Opções: ChromaDB, Pinecone, Weaviate, Qdrant, FAISS, Vertex AI Vector Search.
+Precisamos de um vector store para armazenar embeddings do CDC e jurisprudências do STJ. Opções: ChromaDB, Pinecone, Weaviate, Qdrant, FAISS, Vertex AI Vector Search.
 
 ### Decisão
-**ChromaDB** para desenvolvimento local, **Vertex AI Vector Search** para produção.
+**ChromaDB** para desenvolvimento local e produção (baked na imagem Docker).
+
+### Evolução
+- Inicialmente planejado ChromaDB (dev) + Vertex AI Vector Search (prod).
+- Vertex AI Vector Search desconsiderado: overengineering para o volume de dados do MVP (~50 chunks CDC + ~30 STJ).
+- ChromaDB com persistência em disco atende perfeitamente. O banco vetorial é empacotado na imagem Docker para deploy.
 
 ### Justificativa
-- ✅ ChromaDB: simples, roda in-process, sem setup, perfeito para dev
-- ✅ Vertex AI Vector Search: managed, escalável, integrado com GCP
-- ✅ Separação dev/prod demonstra maturidade de engenharia
-- ✅ A abstração no código é simples (interface comum)
+- ✅ ChromaDB: simples, roda in-process, sem setup
+- ✅ Persistência em disco (`data/chroma_db/`) é suficiente para o volume atual
+- ✅ Baked na imagem Docker = zero dependência externa em produção
+- ✅ Configurado com `hnsw:space: cosine` para distance metric
 
 ### Alternativas rejeitadas
 | Alternativa | Motivo da rejeição |
 |------------|-------------------|
-| Pinecone | SaaS, custo mensal, sem integração GCP nativa |
+| Vertex AI Vector Search | Overengineering para ~80 chunks |
+| Pinecone | SaaS, custo mensal, dependência externa |
 | FAISS | Sem persistência nativa, mais baixo nível |
-| Qdrant | Bom, mas mais complexo de operar que ChromaDB para dev |
+| Qdrant | Mais complexo de operar que ChromaDB |
 
 ### Consequências
-- Criar uma interface `VectorStore` com duas implementações
-- Testar tanto com ChromaDB quanto com Vertex AI antes do deploy
+- Simplicidade máxima: sem serviço externo de banco vetorial
+- Se escalar para milhares de documentos, reavaliar Vertex AI Vector Search
 - ChromaDB grava em disco (diretório `data/chroma_db/`)
 
-### Status: ✅ Aprovado
+### Status: ✅ Aprovado e implementado
 
 ---
 
@@ -157,59 +168,69 @@ Precisamos de um framework web Python para a API REST.
 
 ---
 
-## ADR-006: Frontend — Next.js
+## ADR-006: Frontend — Gradio 6
 
 ### Contexto
 Precisamos de um frontend para o chat. Opções: Next.js, Vite + React, Streamlit, Gradio.
 
 ### Decisão
-**Next.js** para o frontend de produção. **Gradio/Streamlit** como opção para protótipo rápido.
+**Gradio 6** como frontend de produção.
+
+### Evolução
+- Inicialmente planejado Gradio (protótipo) → Next.js (produção).
+- Na prática, Gradio 6 atendeu plenamente: chat interface, disclaimer legal, autenticação nativa, e deploy direto no Cloud Run.
+- Next.js desconsiderado: overhead de desenvolvimento desproporcional para a fase atual do projeto.
 
 ### Justificativa
-- ✅ Next.js é production-ready e SEO-friendly
-- ✅ App Router (React Server Components) — moderno
-- ✅ Deploy fácil no Vercel ou como container
-- ✅ Demonstra habilidade full-stack no portfólio
+- ✅ Gradio 6 é production-ready com auth nativo e temas customizáveis
+- ✅ Integração direta com o backend Python (sem camada HTTP separada)
+- ✅ Deploy simples: mesmo container, mesma porta
+- ✅ Autenticação built-in (auth: `visitante/resolveai`)
+- ✅ Permitiu foco total no backend e na qualidade do RAG
 
-### Observação para o MVP
-Para o MVP, considere usar **Gradio** primeiro para validar o backend:
+### Alternativas descartadas
+| Alternativa | Motivo |
+|------------|--------|
+| Next.js | Overhead de dev, camada desnecessária para MVP |
+| Streamlit | Menos flexível que Gradio para chat interfaces |
+| Vite + React | Mesmo problema do Next.js |
 
-```python
-import gradio as gr
-
-def chat(message, history):
-    response = requests.post("http://localhost:8000/api/chat", json={"message": message})
-    return response.json()["response"]
-
-demo = gr.ChatInterface(fn=chat, title="Resolve Aí")
-demo.launch()
-```
-
-> 💡 **Dica de Sênior:** Gradio em 5 linhas vs. Next.js em dias. Use Gradio para validar o backend, depois migre para Next.js quando o backend estiver estável.
-
-### Status: ✅ Aprovado (Gradio para protótipo, Next.js para produção)
+### Status: ✅ Aprovado e implementado
 
 ---
 
-## ADR-007: Embedding Model
+## ADR-007: Embedding Model — gemini-embedding-001
 
 ### Contexto
 Precisamos de um modelo de embedding para o pipeline RAG.
 
 ### Decisão
-- **Dev local:** `all-MiniLM-L6-v2` (HuggingFace, gratuito, 384d)
-- **Produção:** `text-embedding-004` (Gemini, 768d)
+**`gemini-embedding-001`** via SDK `google-genai` para dev e produção.
+
+### Evolução
+- Inicialmente planejado MiniLM (dev) + text-embedding-004 (prod).
+- Migrado diretamente para `gemini-embedding-001` (unificando dev/prod).
+- Implementado como `GeminiEmbeddingFunction` customizada em `rag/embedder.py`, compatível com ChromaDB.
+- Configurado com `task_type: RETRIEVAL_DOCUMENT` para otimizar retrieval.
 
 ### Justificativa
-- ✅ MiniLM é leve e funciona offline — perfeito para dev
-- ✅ text-embedding-004 tem melhor qualidade para português
-- ✅ A troca é configurável via variável de ambiente
+- ✅ Melhor qualidade semântica para português jurídico vs. MiniLM
+- ✅ Unificar dev/prod elimina bugs de incompatibilidade de embeddings
+- ✅ Resultou em **90% de precisão** no Golden Test Set (melhoria significativa)
+- ✅ ChromaDB embedding function customizada (`rag/embedder.py`) encapsula a API
+
+### Alternativas descartadas
+| Alternativa | Motivo |
+|------------|--------|
+| all-MiniLM-L6-v2 | Qualidade inferior para português jurídico |
+| text-embedding-004 | Substituído pelo mais recente gemini-embedding-001 |
+| Modelos HuggingFace multilíngues | Complexidade desnecessária com API do Gemini disponível |
 
 ### Consequência
-- ⚠️ Embeddings não são compatíveis entre modelos. Ao trocar de MiniLM para Gemini, precisa re-indexar TODA a base
-- Solução: script de ingestão que re-indexa sob demanda
+- Depende de API key do Google para qualquer ambiente (inclusive dev)
+- Script `rag/ingest.py` re-indexa sob demanda quando necessário
 
-### Status: ✅ Aprovado
+### Status: ✅ Aprovado e implementado
 
 ---
 
@@ -217,10 +238,10 @@ Precisamos de um modelo de embedding para o pipeline RAG.
 
 | ID | Decisão | Status | Prazo |
 |----|---------|:------:|:-----:|
-| ADR-008 | Estratégia de re-ranking (cross-encoder vs. RRF) | 🟡 Em avaliação | Fase 2 |
-| ADR-009 | Persistência de conversas (SQLite vs. PostgreSQL) | 🟡 Em avaliação | Fase 2 |
-| ADR-010 | CI/CD (GitHub Actions vs. Cloud Build) | 🔲 Não iniciado | Fase 2 |
-| ADR-011 | Monitoramento em produção (LangSmith vs. W&B) | 🔲 Não iniciado | Fase 2 |
+| ADR-008 | Estratégia de re-ranking (cross-encoder vs. RRF) | 🟡 Em avaliação | Fase 3 |
+| ADR-009 | Persistência de conversas (SQLite vs. PostgreSQL) | 🟡 Em avaliação | Fase 3 |
+| ADR-010 | CI/CD (GitHub Actions vs. Cloud Build) | 🔲 Não iniciado | Fase 3 |
+| ADR-011 | Monitoramento em produção (LangSmith vs. W&B) | 🔲 Não iniciado | Fase 3 |
 
 ---
 

@@ -2,6 +2,8 @@
 
 > Seu assistente inteligente para dúvidas sobre o Código de Defesa do Consumidor
 
+Um chatbot multi-agente que ajuda consumidores brasileiros a entender seus direitos sob o *Código de Defesa do Consumidor* (CDC / Lei 8.078/1990) e obter orientação concreta sobre como resolver seus problemas.
+
 ---
 
 ## 🎯 O Problema
@@ -14,40 +16,31 @@ O **Resolve Aí** é um chatbot inteligente com arquitetura **multi-agentes + RA
 
 1. **Analisa** se o caso se enquadra no CDC e identifica artigos aplicáveis
 2. **Classifica** o tipo de problema (defeito, cobrança indevida, propaganda enganosa, etc.)
-3. **Orienta** com uma estratégia personalizada de resolução
-4. **Encaminha** com links e instruções concretas para os canais mais adequados
-
-### Fluxo de Encaminhamento
-
-| Etapa | Canal | Quando usar |
-|:-----:|-------|-------------|
-| 1ª | Contato direto com a empresa | Sempre como primeiro passo |
-| 2ª | Ouvidoria da empresa | Quando o SAC não resolver |
-| 3ª | [consumidor.gov.br](https://www.consumidor.gov.br) | Plataforma oficial do governo |
-| 4ª | PROCON estadual/municipal | Quando as anteriores falharem |
-| 5ª | Juizado Especial Cível (JEC) | Casos sem solução extrajudicial |
+3. **Planeja** uma estratégia personalizada de resolução
+4. **Orienta** com passos concretos e links para os canais mais adequados
 
 ---
 
-## 🧠 Arquitetura (Visão Geral)
-
-O sistema utiliza **4 agentes especializados** orquestrados por LangGraph, alimentados por uma base de conhecimento RAG do CDC:
+## 🧠 Arquitetura
 
 ```
-Usuário → Interface Chat/Web
+Usuário → Interface Chat (Gradio)
                 │
                 ▼
-        Agente Orquestrador ──→ coordena fluxo
-           │           │
-           ▼           ▼
-       RAG CDC    Ag. Análise Jurídica ──→ identifica enquadramento
-           │           │
-           └─────┬─────┘
-                 ▼
-         Ag. Estratégia ──→ monta plano de ação
-                 │
-                 ▼
-         Ag. Resposta ──→ formata resposta final
+         FastAPI REST API
+                │
+                ▼
+      Agente Orquestrador ──→ classifica intenção
+          │           │
+          ▼           ▼
+     RAG (CDC)   Ag. Análise Jurídica ──→ identifica artigos do CDC
+          │           │
+          └─────┬─────┘
+                ▼
+        Ag. Estratégia ──→ monta plano de ação
+                │
+                ▼
+        Ag. Resposta ──→ formata resposta final
 ```
 
 > 📐 Arquitetura completa com diagramas Mermaid em [ARCHITECTURE.md](./ARCHITECTURE.md)
@@ -57,13 +50,14 @@ Usuário → Interface Chat/Web
 ## ⚙️ Stack Tecnológica
 
 | Camada | Tecnologia |
-|--------|-----------|
-| **LLM** | Gemini 1.5 Flash (via Vertex AI / API direta) |
+|---|---|
+| **LLM** | Gemini 3.1 Flash Lite (Google GenAI SDK `google-genai`) |
 | **Orquestração de Agentes** | LangGraph |
-| **RAG / Embeddings** | LlamaIndex + ChromaDB (dev) → Vertex AI Vector Search (prod) |
-| **Backend** | Python + FastAPI |
-| **Frontend** | Next.js |
-| **Deploy** | Docker + Google Cloud Run |
+| **RAG / Embeddings** | ChromaDB + `gemini-embedding-001` (Cosine Distance) |
+| **Backend** | Python 3.12 + FastAPI |
+| **Frontend** | Gradio 6 |
+| **Gerenciador de Pacotes** | UV |
+| **Deploy** | Docker + Google Cloud Run (com Safeguards) |
 
 ---
 
@@ -71,60 +65,101 @@ Usuário → Interface Chat/Web
 
 ```
 resolve-ai/
-├── agents/                  # Agentes de IA (LangGraph)
-│   ├── orchestrator.py      # Orquestrador principal
-│   ├── legal_analysis.py    # Análise jurídica
-│   ├── strategy.py          # Estratégia de encaminhamento
-│   └── response.py          # Formatação de resposta
+├── agents/                  # Agentes de IA (LangGraph nodes)
+│   ├── llm_client.py        # Wrapper centralizado do Gemini SDK
+│   ├── orchestrator.py      # Classificação de intenção e roteamento
+│   ├── legal_analysis.py    # Identificação de artigos do CDC via RAG
+│   ├── strategy.py          # Planejamento de canais de resolução
+│   ├── response.py          # Formatação da resposta final
+│   └── workflow.py          # Orquestração do StateGraph (LangGraph)
 ├── rag/                     # Pipeline RAG
-│   ├── ingestion/           # Ingestão de documentos
-│   ├── retrieval/           # Busca e ranking
-│   └── vector_store/        # Configuração ChromaDB
+│   ├── ingest.py            # Ingestão de documentos (download → chunk → embed → index)
+│   ├── embedder.py          # Embedding function customizada (Gemini)
+│   └── retrieval.py         # Busca por similaridade + filtragem por threshold
 ├── api/                     # Backend FastAPI
-│   ├── routes/              # Endpoints REST
-│   └── schemas/             # Modelos Pydantic
-├── frontend/                # Next.js
-├── data/                    # Fontes de conhecimento
-│   ├── cdc/                 # Texto do CDC
-│   ├── jurisprudence/       # Jurisprudência (Fase 2)
-│   └── procon/              # Base PROCON (Fase 2)
-├── evaluation/              # Notebooks de avaliação RAGAS
-├── tests/                   # Testes unitários e integração
-├── docs/                    # Especificações e documentação
-├── .env.example
-├── docker-compose.yml
-├── requirements.txt
-└── README.md
+│   ├── main.py              # Entry point do app + middleware
+│   └── routes.py            # Endpoints /api/chat, /api/health
+├── frontend/                # Interface chat Gradio
+│   └── app.py               # Chat UI com disclaimer legal
+├── data/
+│   ├── cdc/                 # Documentos-fonte do CDC
+│   └── jurisprudencia/      # Súmulas e temas do STJ
+├── evaluation/              # Golden test set (10 cenários CDC) + RAGAS
+├── tests/                   # Testes unitários + integração (32 testes)
+├── config.py                # Fonte única de configuração (lê do .env)
+├── pyproject.toml           # Dependências (gerenciadas com UV)
+├── Dockerfile               # Imagem de container para produção
+├── deploy.md                # Instruções e safeguards do deploy Cloud Run
+└── .env.example             # Template de variáveis de ambiente
 ```
 
 ---
 
-## 🚀 Status do Projeto
+## 🚀 Como Começar
 
-**Fase atual:** Pré-MVP (planejamento e documentação concluídos)
+### Pré-requisitos
+
+- Python 3.12+
+- [UV](https://docs.astral.sh/uv/) (gerenciador de pacotes)
+- [Chave da API Gemini](https://aistudio.google.com/) **ou** [Ollama](https://ollama.com/) para LLM local
+
+### Setup
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/mdaniliauskas/resolve-ai.git
+cd resolve-ai
+
+# 2. Instale as dependências (UV cria o virtualenv automaticamente)
+uv sync
+
+# 3. Configure o ambiente
+cp .env.example .env
+# Edite .env com sua GOOGLE_API_KEY
+
+# 4. Inicie a interface de chat (Auth: visitante/resolveai)
+uv run python frontend/app.py
+# → http://localhost:7860
+
+# Ou inicie apenas a API
+uv run uvicorn api.main:app --reload
+# → http://localhost:8000/docs
+
+# Rodar testes
+uv run pytest -v
+```
+
+> Guia completo de setup em [SETUP.md](./SETUP.md)
+
+---
+
+## 📊 Status do Projeto
+
+**Fase atual:** Enriched & Deployed (Sprint 6 completo ✅)
 
 | Fase | Status | Descrição |
-|------|:------:|-----------|
-| **MVP** | 🔲 | Chat + RAG CDC + Agente de análise + Encaminhamento |
-| **Enriquecimento** | 🔲 | Jurisprudência + Estratégia avançada + Histórico + PDF |
-| **Escala** | 🔲 | Integração gov.br + Cartas automáticas + App mobile |
+|---|:---:|---|
+| **Sprint 1** | ✅ Done | Scaffold, pipeline RAG, golden test set |
+| **Sprint 2** | ✅ Done | Pipeline multi-agente (orquestrador, jurídico, estratégia, resposta) |
+| **Sprint 3** | ✅ Done | Chat UI Gradio, disclaimer legal, README |
+| **Sprint 4 (RAG)** | ✅ Done | Migração para `gemini-embedding-001` (90% Precision Score) |
+| **Sprint 5 (Deploy)** | ✅ Done | Google Cloud Run Deploy + Safeguards (Auth & Token Caps) |
+| **Escala** | 🔲 Planejado | Integração gov.br + Cartas automáticas + Mobile |
 
 > 📋 Roadmap detalhado em [ROADMAP.md](./ROADMAP.md)
 
 ---
 
-## 📚 Documentação Completa
+## 📚 Documentação
 
 | Documento | Descrição |
-|-----------|-----------|
+|---|---|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Arquitetura detalhada com diagramas Mermaid |
-| [SETUP.md](./SETUP.md) | Guia de setup do ambiente de desenvolvimento |
-| [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) | Guia de desenvolvimento + dicas de sênior |
-| [TECH_DECISIONS.md](./TECH_DECISIONS.md) | Decisões técnicas (ADRs) |
-| [MVP_SPEC.md](./MVP_SPEC.md) | Especificação técnica do MVP |
-| [ROADMAP.md](./ROADMAP.md) | Roadmap com milestones e critérios |
-| [PROMPTS_GUIDE.md](./PROMPTS_GUIDE.md) | Prompts para desenvolvimento assistido por IA |
-| [REFERENCES.md](./REFERENCES.md) | Papers, cursos e recursos de referência |
+| [MVP_SPEC.md](./MVP_SPEC.md) | Especificação técnica: API, templates de prompt, critérios de aceite |
+| [TECH_DECISIONS.md](./TECH_DECISIONS.md) | Architecture Decision Records (ADRs) |
+| [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) | Filosofia de dev, code patterns e dicas de sênior |
+| [ROADMAP.md](./ROADMAP.md) | Roadmap com milestones e critérios de aceite |
+| [SETUP.md](./SETUP.md) | Guia passo a passo de setup do ambiente |
 
 ---
 
@@ -133,18 +168,6 @@ resolve-ai/
 Baseado na **Lei nº 8.078/1990** (Código de Defesa do Consumidor) e normas do SNDC.
 
 > ⚠️ O Resolve Aí oferece orientação informativa e **não substitui assessoria jurídica profissional**. Para casos complexos, recomenda-se consultar um advogado.
-
----
-
-## 🧑‍💻 Contexto do Desenvolvedor
-
-Este projeto é desenvolvido por alguém com:
-- **Doutorado em Sociologia** → rigor metodológico, avaliação de vieses, pesquisa qualitativa/quantitativa
-- **ADS pela FATEC SP** → base sólida em Engenharia de Software
-- **Curso de LLM Engineering** (Ed Donner / Udemy) → RAG, Fine-tuning, Agents
-- **Google Cloud credits** → deploy e experimentação em Vertex AI
-
-O projeto serve como **carro-chefe do portfólio** para uma vaga de Desenvolvedor/Pesquisador GenAI.
 
 ---
 
