@@ -70,3 +70,10 @@ across sprints (L-001, L-002, ..., L-015, etc.).
 4. **Include interview angles** in the deep dive — "How would you explain this?"
 5. **Every error/bug/surprise goes in learnings_log.md** — even small ones.
 6. The summary and deep_dive are **per-sprint**; the learnings_log is **one file, append-only**.
+7. **Keep public docs in sync after every sprint or architectural change.** After any sprint delivery or ADR update, audit and update:
+   - `projetos/resolve-ai/README.md` (PT) — stack, structure, and status table
+   - `projetos/resolve-ai/TECH_DECISIONS.md` — affected ADRs (update status and add "Evolução" if the decision changed)
+   - `projetos/resolve-ai/ROADMAP.md` — mark completed sprints/tasks with ✅ and update MoSCoW
+   - `README.md` (EN, root) — must match PT README on stack and status
+
+   > ⚠️ Outdated public docs create mismatches that only surface when the project is shared externally (e.g., recruiters, colaborators). Discovered during Tractian application prep (March 2026): PT README still said "Gemini 1.5 Flash + Next.js + Vertex AI" while the actual stack was Gemini 3.1 Flash Lite + Gradio 6 + ChromaDB.
