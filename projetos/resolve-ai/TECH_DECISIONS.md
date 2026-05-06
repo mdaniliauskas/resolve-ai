@@ -168,34 +168,76 @@ Precisamos de um framework web Python para a API REST.
 
 ---
 
-## ADR-006: Frontend — Gradio 6
+## ADR-006: Frontend — Gradio 6 (MVP)
 
 ### Contexto
 Precisamos de um frontend para o chat. Opções: Next.js, Vite + React, Streamlit, Gradio.
 
 ### Decisão
-**Gradio 6** como frontend de produção.
+**Gradio 6** como frontend do MVP (Sprints 1-6).
 
 ### Evolução
 - Inicialmente planejado Gradio (protótipo) → Next.js (produção).
-- Na prática, Gradio 6 atendeu plenamente: chat interface, disclaimer legal, autenticação nativa, e deploy direto no Cloud Run.
-- Next.js desconsiderado: overhead de desenvolvimento desproporcional para a fase atual do projeto.
+- Na prática, Gradio 6 atendeu o MVP: chat funcional, disclaimer, auth nativa, deploy no Cloud Run.
+- **Supersedido por ADR-008** (Next.js 16) a partir da Fase A do novo roadmap.
+- Gradio mantido em `frontend-legacy/` durante a migração.
+
+### Justificativa (MVP)
+- ✅ Integração direta com Python (sem camada HTTP separada)
+- ✅ Deploy simples no mesmo container
+- ✅ Permitiu foco total no pipeline de agentes e RAG
+
+### Limitações que motivaram a migração
+- ❌ Design genérico de "demo de ML" — incompatível com objetivo de produto público
+- ❌ Sem controle de UX para o público-alvo (baixa escolaridade, mobile)
+- ❌ Não suporta streaming token-a-token com experiência refinada
+- ❌ Sem cartões visuais estruturados por tipo de informação
+
+### Status: ⚠️ Supersedido por ADR-008 (mantido como legacy durante migração)
+
+---
+
+## ADR-008: Frontend — Next.js 16 (Produto)
+
+### Contexto
+Gradio 6 atendeu o MVP mas não atende o objetivo de produto: UX refinada, empática, acessível para o público de baixa escolaridade, com streaming, cartões visuais e futuramente áudio. Ver limitações em ADR-006.
+
+### Decisão
+**Next.js 16.2** (App Router) + **Tailwind CSS 4** + **shadcn/ui** + **Vercel AI SDK 6** como frontend de produto.
 
 ### Justificativa
-- ✅ Gradio 6 é production-ready com auth nativo e temas customizáveis
-- ✅ Integração direta com o backend Python (sem camada HTTP separada)
-- ✅ Deploy simples: mesmo container, mesma porta
-- ✅ Autenticação built-in (auth: `visitante/resolveai`)
-- ✅ Permitiu foco total no backend e na qualidade do RAG
+- ✅ Controle total de design — necessário para UX empática e acessível
+- ✅ Streaming nativo via Vercel AI SDK (token-a-token, sem polling)
+- ✅ shadcn/ui com Tailwind 4: componentes acessíveis (a11y) sem overhead
+- ✅ Next.js 16 App Router: Server Components, performance, deploy em Cloud Run ou Vercel
+- ✅ TypeScript end-to-end — cliente gerado a partir do OpenAPI do FastAPI
+- ✅ Valor de portfólio: stack moderna que Tech Leads reconhecem
+- ✅ Base para Fase D (áudio via Web Speech API, PWA)
 
-### Alternativas descartadas
+### Alternativas rejeitadas
 | Alternativa | Motivo |
 |------------|--------|
-| Next.js | Overhead de dev, camada desnecessária para MVP |
-| Streamlit | Menos flexível que Gradio para chat interfaces |
-| Vite + React | Mesmo problema do Next.js |
+| SvelteKit | Menor comunidade e transferibilidade de mercado |
+| Vite + React (SPA pura) | Sem SSR, perde SEO e performance de carregamento |
+| Gradio com custom CSS | Teto baixo demais; selectors instáveis entre versões |
+| Streamlit | Mesmas limitações do Gradio |
 
-### Status: ✅ Aprovado e implementado
+### Consequências
+- Frontend em TypeScript/React separado do backend Python
+- Comunicação via HTTP REST (FastAPI já expõe `/api/chat`)
+- CORS configurado no FastAPI para a URL do novo frontend
+- Gradio permanece em `frontend-legacy/` por 1 sprint como fallback
+- Deploy: frontend pode ir para Vercel (mais simples) ou Cloud Run (junto com backend)
+
+### Stack de versões verificadas em 2026-05-06
+| Pacote | Versão |
+|--------|--------|
+| next | 16.2 |
+| tailwindcss | 4.2.4 |
+| shadcn/ui CLI | 4.x |
+| ai (Vercel AI SDK) | 6.0.175 |
+
+### Status: 🔵 Aprovado — Fase A em andamento
 
 ---
 
@@ -238,10 +280,12 @@ Precisamos de um modelo de embedding para o pipeline RAG.
 
 | ID | Decisão | Status | Prazo |
 |----|---------|:------:|:-----:|
-| ADR-008 | Estratégia de re-ranking (cross-encoder vs. RRF) | 🟡 Em avaliação | Fase 3 |
-| ADR-009 | Persistência de conversas (SQLite vs. PostgreSQL) | 🟡 Em avaliação | Fase 3 |
-| ADR-010 | CI/CD (GitHub Actions vs. Cloud Build) | 🔲 Não iniciado | Fase 3 |
-| ADR-011 | Monitoramento em produção (LangSmith vs. W&B) | 🔲 Não iniciado | Fase 3 |
+| ADR-009 | Estratégia de re-ranking (cross-encoder vs. RRF) | 🟡 Em avaliação | Fase B |
+| ADR-010 | Persistência de conversas (Supabase Postgres vs. Firestore) | 🟡 Em avaliação | Fase C |
+| ADR-011 | CI/CD (GitHub Actions vs. Cloud Build) | 🔲 Não iniciado | Fase B |
+| ADR-012 | Observabilidade (LangSmith vs. Phoenix/Arize self-hosted) | 🔲 Não iniciado | Fase A |
+| ADR-013 | Auth de usuários (Supabase Auth vs. Clerk) | 🔲 Não iniciado | Fase C |
+| ADR-014 | Deploy frontend (Vercel vs. Cloud Run junto com backend) | 🔲 Não iniciado | Fase A |
 
 ---
 

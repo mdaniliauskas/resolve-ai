@@ -1,164 +1,155 @@
 # Roadmap — Resolve Aí 🗺️
 
-> Roadmap detalhado com 3 fases, milestones, critérios de aceite e estimativas.
+> Atualizado: 2026-05-06 | Ritmo: ~10h/semana | Cronograma ajustado conforme avanço real.
 
 ---
 
-## Visão Geral
+## Histórico — Fases 1 e 2 (Concluído ✅)
+
+| Sprint | Entregável principal | Status |
+|--------|---------------------|:------:|
+| Sprint 1 | Setup, RAG CDC, ChromaDB | ✅ |
+| Sprint 2 | Agentes LangGraph, `/api/chat` | ✅ |
+| Sprint 3 | Frontend Gradio, Agente de Estratégia, Docker | ✅ |
+| Sprint 4 | RAG avançado, `gemini-embedding-001`, RAGAS (90% precisão) | ✅ |
+| Sprint 5 | Jurisprudência STJ indexada, migração SDK `google-genai` | ✅ |
+| Sprint 6 | Deploy Cloud Run, auth Gradio, safeguards de tokens | ✅ |
+
+---
+
+## Nova Estrutura — 4 Fases
 
 ```
-Fase 1: MVP ─────────── Chat + RAG CDC + Análise + Encaminhamento
-Fase 2: Enriquecimento ─ Jurisprudência + Estratégia + Histórico + PDF
-Fase 3: Escala ────────── Integrações + Cartas + Painel + Mobile
+Fase A: Fundação de Produto ── Frontend Next.js + streaming + observabilidade
+Fase B: Engenharia de Qualidade ── Evals em CI + cost engineering + type safety
+Fase C: Produto para Usuários Reais ── Auth + persistência + LGPD + PDF
+Fase D: Diferenciação ── Áudio + integrações + analytics
 ```
 
 ---
 
-## Fase 1 — MVP (4-6 semanas)
+## Fase A — Fundação de Produto (~4 semanas)
 
-> **Objetivo:** Chat funcional que analisa situações de consumo à luz do CDC e orienta o consumidor.
+> **Objetivo:** Deixar de parecer demo. Virar UX de produto que impressiona Tech Lead e que o usuário-alvo consegue usar.
 
-### Sprint 1: Fundação (Semana 1-2)
+### Sprint A1 — Novo Frontend (semana 1-2)
 
-| Tarefa | Componente | Critério de Aceite | Estimativa |
-|--------|:----------:|-------------------|:----------:|
-| Setup do projeto (repo, venv, CI básico) | Infra | Repo no GitHub + README | 2h |
-| API esqueleto (FastAPI + health check) | Backend | `/api/health` retorna 200 | 2h |
-| Download e limpeza do CDC | Data | `cdc_clean.txt` gerado | 3h |
-| Pipeline de chunking com metadata | RAG | Chunks indexados no ChromaDB | 4h |
-| Retrieval básico (similarity search) | RAG | Query retorna chunks relevantes | 3h |
-| Teste do retrieval com golden set | RAG | ≥ 70% dos artigos corretos no top-5 | 3h |
-
-**Entregável:** `POST /api/search?q=...` que retorna chunks do CDC relevantes.
-
-### Sprint 2: Inteligência (Semana 3-4)
-
-| Tarefa | Componente | Critério de Aceite | Estimativa |
-|--------|:----------:|-------------------|:----------:|
-| Agente de Análise Jurídica | Agents | Identifica artigos em 8/10 golden tests | 6h |
-| Agente Orquestrador | Agents | Roteia corretamente CDC vs. fora do CDC | 4h |
-| Agente de Resposta | Agents | Resposta clara e acionável | 4h |
-| Integração LangGraph | Agents | Grafo end-to-end funcionando | 4h |
-| Endpoint `/api/chat` completo | Backend | Resposta com análise + fontes | 3h |
-| Testes unitários dos agentes | Tests | ≥ 10 testes passando | 4h |
-
-**Entregável:** API funcional que recebe mensagem e retorna análise completa.
-
-### Sprint 3: Interface + Polish (Semana 5-6)
-
-| Tarefa | Componente | Critério de Aceite | Estimativa |
-|--------|:----------:|-------------------|:----------:|
-| Frontend chat (Gradio ou Next.js mínimo) | Frontend | Interface funcional | 6h |
-| Agente de Estratégia | Agents | Sugere canais priorizados | 4h |
-| Disclaimer legal na UI | Frontend | Visível antes de usar | 1h |
-| Dockerização completa | Infra | `docker compose up` funciona | 3h |
-| Avaliação com golden test set completo | Quality | ≥ 80% precisão | 3h |
-| README final com demo | Docs | Screenshots + instruções | 3h |
-
-**Entregável:** MVP demonstrável — chat web que orienta consumidores.
-
-### 🏁 Milestone: MVP Completo
-
-**Critérios de aceite do MVP:**
-- [x] Chat funciona end-to-end (pergunta → resposta com artigos)
-- [x] Precisão ≥ 80% no golden test set (10 cenários) -> **Atingido 90%**
-- [x] Latência < 15s por request
-- [x] Casos fora do CDC são tratados adequadamente (Orquestrador estrito)
-- [x] Disclaimer legal presente
-- [x] README com instruções de setup e demo
-- [x] Deploy funcional (Google Cloud Run + Auth Safeguards)
-
----
-
-## Fase 2 — Enriquecimento (4-6 semanas)
-
-> **Objetivo:** Melhorar a qualidade das respostas, adicionar funcionalidades de retenção e valor.
-
-### Sprint 4: RAG Avançado (Concluída ✅)
-
-| Tarefa | Componente | Critério de Aceite |
+| Tarefa | Componente | Critério de aceite |
 |--------|:----------:|--------------------|
-| Atualizar Embeddings (Google GenAI) | RAG | `gemini-embedding-001` implantado e testado (Concluído ✅) |
-| Re-ranking de resultados | RAG | Threshold `cosine` e score adaptados (Concluído ✅) |
-| Adicionar jurisprudência ao RAG (STJ) | RAG | ≥ 20 decisões relevantes indexadas (Concluído ✅) |
-| Avaliação RAGAS completa | Evaluation | 4 métricas medidas e documentadas (Concluído ✅) |
+| Setup Next.js 16 + Tailwind 4 + shadcn/ui | Frontend | `npm run dev` funciona, página inicial renderizando |
+| Layout base: header, chat area, footer | Frontend | Estrutura responsiva no mobile e desktop |
+| Integração com `/api/chat` via Vercel AI SDK 6 | Frontend | Mensagem enviada, resposta recebida |
+| Streaming token-a-token | Frontend | Resposta aparece progressivamente (não espera tudo) |
+| Estados de carregamento humanizados | Frontend | "Estou consultando o CDC..." durante processamento |
+| Microcopy revisada com tom empático | Frontend | Sem jargão jurídico cru; linguagem de "amigo que entende" |
 
-### Sprint 5: Funcionalidades
+**Entregável:** Novo frontend rodando localmente, consumindo a API existente.
 
-| Tarefa | Componente | Critério de Aceite |
+### Sprint A2 — Cartões e Observabilidade (semana 3-4)
+
+| Tarefa | Componente | Critério de aceite |
 |--------|:----------:|--------------------|
-| Histórico de conversas (sessão) | Backend | Usuário mantém contexto na sessão |
-| Exportação do caso em PDF | Backend | PDF gerado com análise + passos |
-| Agente de Estratégia avançado | Agents | Priorização por tipo de empresa e gravidade |
-| Observabilidade (LangSmith ou logging) | Infra | Traces de cada request visíveis |
+| Resposta em cartões visuais | Frontend | "Seus direitos", "Próximo passo", "Artigos CDC" separados |
+| Exemplos como cards clicáveis (não lista) | Frontend | 4 cards na tela inicial, clique preenche o campo |
+| Logging estruturado com `structlog` | Backend | Cada request logado em JSON com trace_id |
+| LangSmith para tracing de agentes | Backend | Traces visíveis no dashboard LangSmith |
+| Gradio mantido como `frontend-legacy/` | Infra | Continua funcional em paralelo |
+| CORS e deploy do frontend no Cloud Run | Infra | Frontend novo em produção |
 
-### Sprint 6: Deploy e Produção (Concluída ✅)
+**Entregável:** Produto visualmente refinado em produção. Frontend Gradio aposentado.
 
-| Tarefa | Componente | Critério de Aceite |
+### 🏁 Milestone Fase A — Produto Fundado
+
+- [ ] Frontend Next.js em produção (URL pública)
+- [ ] Streaming funcionando end-to-end
+- [ ] Resposta em cartões visuais (sem markdown corrido)
+- [ ] Tracing de cada request no LangSmith
+- [ ] Logging estruturado em produção
+
+---
+
+## Fase B — Engenharia de Qualidade (~3 semanas)
+
+> **Objetivo:** O que separa "fiz um chatbot" de "operei um sistema de IA". Foco em rigor de engenharia visível pra Tech Lead.
+
+### Sprint B1 — Evals e CI (semana 5-6)
+
+| Tarefa | Componente | Critério de aceite |
 |--------|:----------:|--------------------|
-| Deploy no Google Cloud Run | Infra | App rodando em URL pública + Dockerfile (Concluído ✅) |
-| Implementação de Safeguards | Infra/API | Gradio Auth e LLM Output Token Limits (Concluído ✅) |
-| Gemini como LLM principal via SDK novo | LLM | Migração do `generativeai` para `google-genai` (Concluído ✅) |
-| CI/CD (GitHub Actions) | Infra | Push → Test → Deploy automático |
+| Golden test set em GitHub Actions | CI | PR que quebra ≥1 cenário é bloqueado |
+| RAGAS rodando em CI | CI | 4 métricas (faithfulness, answer_relevancy, context_precision, context_recall) medidas por PR |
+| Badge de qualidade no README | Docs | Score RAGAS atual visível no repo |
+| Testes de integração E2E com mock LLM | Tests | Pipeline completo testado sem custo de API |
 
-### 🏁 Milestone: Produto Deployado e Polido
+### Sprint B2 — Cost Engineering e Type Safety (semana 7)
 
-- [x] Respostas embasadas em CDC super precisas com `gemini-embedding-001`
-- [x] Deploy em produção (Cloud Run) com banco vetorial standalone
-- [x] Proteção contra ABUSO de consumo de tokens
-- [ ] PDF exportável
-- [ ] Histórico de conversas funcional
+| Tarefa | Componente | Critério de aceite |
+|--------|:----------:|--------------------|
+| Rate limiting por IP (middleware FastAPI) | Backend | Max 20 req/hora por IP |
+| Prompt caching da Gemini | Backend | Cache hit rate > 60% em sessões longas |
+| Cache de embeddings (não re-embedar mesmos chunks) | RAG | Latência de retrieval < 200ms |
+| Cliente TypeScript gerado do OpenAPI | Frontend | Tipos do backend em sync com o front automaticamente |
 
----
+### 🏁 Milestone Fase B — Engenharia Sólida
 
-## Fase 3 — Escala (6-8 semanas)
-
-> **Objetivo:** Escalar funcionalidades e alcance.
-
-### Features Planejadas
-
-| Tarefa | Componente | Impacto |
-|--------|:----------:|---------|
-| Integração com consumidor.gov.br (API) | Integração | Preenchimento automático de reclamação |
-| Geração de cartas/e-mails de reclamação | Agents | Modelo de carta com dados do caso |
-| Painel de acompanhamento de casos | Frontend | Dashboard com status das reclamações |
-| App mobile (React Native / PWA) | Frontend | Acesso via celular |
-| Autenticação de usuários | Backend | Persistência de dados por usuário |
-| Analytics de uso | Infra | Métricas de engajamento |
-
-### 🏁 Milestone: Produto Escalável
-
-- [ ] Pelo menos 2 integrações externas
-- [ ] Base de usuários ativos
-- [ ] Métricas de satisfação coletadas
+- [ ] CI bloqueia PRs que degradam qualidade do RAG
+- [ ] Custo por request estimado e documentado
+- [ ] Type safety end-to-end backend ↔ frontend
+- [ ] README com badges: CI ✅, RAGAS score, cobertura de testes
 
 ---
 
-## Cronograma Alinhado com Preparação GenAI
+## Fase C — Produto para Usuários Reais (~5 semanas)
 
-> Sincronizado com o curso Ed Donner e o plano de preparação para a vaga.
+> **Objetivo:** Infraestrutura mínima para convidar usuários reais sem quebrar nem vazar dados.
 
-```
-Semana 1-2  │ Sprint 1     │ Curso: Setup + Chatbot     │ RAG do CDC pronto
-Semana 3-4  │ Sprint 2     │ Curso: RAG + Embeddings    │ Agentes funcionais
-Semana 5-6  │ Sprint 3     │ Curso: Advanced RAG        │ MVP completo ✨
-Semana 7-8  │ Sprint 4     │ Curso: Fine-tuning         │ RAGAS avaliação
-Semana 9-10 │ Sprint 5-6   │ Capstone + Prep entrevista │ Deploy Cloud Run
-```
+### Funcionalidades
 
-> 💡 **Dica de Sênior:** Esse cronograma é agressivo. Se atrasar, priorize: **MVP funcional > avaliação > polimento**. Um MVP que funciona vale mais que um projeto half-done com features avançadas.
+| Tarefa | Componente | Critério de aceite |
+|--------|:----------:|--------------------|
+| Autenticação (magic link via Supabase Auth ou Clerk) | Auth | Login sem senha funcional |
+| Persistência de conversas (Supabase Postgres) | Backend | Histórico visível entre sessões |
+| Histórico por usuário na UI | Frontend | Sidebar com conversas anteriores |
+| Geração de carta de reclamação em PDF | Backend | PDF com análise, direitos e passos gerado por request |
+| LGPD: política de privacidade + consentimento + direito ao esquecimento | Legal/Backend | Dados deletáveis, política publicada |
+| Soft launch com 20-50 usuários convidados | Produto | Feedback coletado, bugs corrigidos |
+
+### 🏁 Milestone Fase C — Produto com Usuários
+
+- [ ] Usuários conseguem criar conta e recuperar histórico
+- [ ] PDF de carta exportável
+- [ ] LGPD compliance básico
+- [ ] Pelo menos 20 usuários reais tendo usado
 
 ---
 
-## Priorização (MoSCoW)
+## Fase D — Diferenciação (~5 semanas)
+
+> **Objetivo:** Funcionalidades que viram conversa e aumentam alcance.
+
+| Tarefa | Componente | Impacto esperado |
+|--------|:----------:|-----------------|
+| Áudio bidirecional (Web Speech API) | Frontend | Acessibilidade para baixa escolaridade |
+| Integração consumidor.gov.br | Backend | Preenche reclamação automaticamente |
+| Painel de acompanhamento de casos | Frontend | Retenção de usuário |
+| Analytics de uso (PostHog) | Infra | Entender o que o usuário realmente faz |
+| Notificações (e-mail) sobre atualizações do caso | Backend | Engajamento ativo |
+
+---
+
+## Priorização MoSCoW Atual
 
 | Prioridade | Feature | Status |
-|:----------:|---------|---------|
-| **Must** | Chat + RAG CDC + Análise jurídica + Encaminhamento | ✅ Done |
-| **Should** | Avaliação RAGAS + Deploy Cloud Run + Testes | ✅ Done |
-| **Could** | Jurisprudência STJ + PDF + Histórico | STJ ✅ / PDF e Histórico 🔲 |
-| **Won't (agora)** | Mobile + Auth de usuário + Integrações externas | 🔲 |
+|:----------:|---------|:------:|
+| **Must** | Frontend Next.js (Fase A) | 🔵 Em andamento |
+| **Must** | Streaming + cartões visuais | 🔵 Em andamento |
+| **Must** | Observabilidade (LangSmith) | 🔵 Em andamento |
+| **Should** | Evals em CI + RAGAS (Fase B) | 🔲 |
+| **Should** | Rate limit + cost engineering | 🔲 |
+| **Could** | Auth + persistência (Fase C) | 🔲 |
+| **Could** | PDF de carta | 🔲 |
+| **Won't (agora)** | Áudio, integrações externas, mobile | 🔲 |
 
 ---
 
-*Atualize este roadmap conforme o progresso. Marque com ✅ os itens concluídos.*
+*Ritmo real > cronograma teórico. Atualize este arquivo ao final de cada sprint.*
