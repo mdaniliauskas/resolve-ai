@@ -1,0 +1,30 @@
+# syntax=docker/dockerfile:1
+# Frontend — Next.js 16
+# Deployed as Cloud Run service: resolve-ai-web
+
+FROM node:24-slim AS builder
+
+WORKDIR /app
+COPY web/package*.json ./
+RUN npm ci
+
+COPY web/ .
+RUN npm run build
+
+# ── Runtime stage ─────────────────────────────────────────────────────────────
+FROM node:24-slim
+
+WORKDIR /app
+
+# Standalone output includes only what's needed to run
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
+
+ENV NODE_ENV=production
+ENV PORT=8080
+# Set at deploy time: BACKEND_URL=https://resolve-ai-api-xxxx-uc.a.run.app
+
+EXPOSE 8080
+
+CMD ["node", "server.js"]

@@ -1,5 +1,7 @@
 "use client";
 
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -35,7 +37,11 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
               {isCdcCase ? "✅ CDC se aplica ao seu caso" : "ℹ️ Fora do CDC"}
             </Badge>
           )}
-          <p className="whitespace-pre-wrap">{message.content}</p>
+          <div className="prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </div>
 
         {/* Artigos do CDC */}
