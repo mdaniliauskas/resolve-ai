@@ -3,27 +3,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import type { ChatMessage } from "@/types/chat";
 
-type Article = { number: string; title: string };
-type Precedent = { reference: string; summary: string };
-type Channel = { name: string; priority: number; description: string };
-
-type Message = {
-  role: "user" | "assistant";
-  content: string;
-  data?: {
-    analysis?: {
-      is_cdc_case: boolean;
-      articles?: Article[];
-      precedents?: Precedent[];
-    };
-    strategy?: {
-      channels?: Channel[];
-    };
-  };
-};
-
-export function MessageBubble({ message }: { message: Message }) {
+export function MessageBubble({ message }: { message: ChatMessage }) {
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
@@ -84,10 +66,10 @@ export function MessageBubble({ message }: { message: Message }) {
             </CardHeader>
             <CardContent className="px-4 pb-3 space-y-2">
               {channels
-                .sort((a, b) => a.priority - b.priority)
-                .map((ch, i) => (
+                .sort((a, b) => a.step - b.step)
+                .map((ch) => (
                   <div key={ch.name} className="flex gap-2 text-xs text-blue-900">
-                    <span className="font-bold shrink-0">{i + 1}.</span>
+                    <span className="font-bold shrink-0">{ch.step}.</span>
                     <div>
                       <span className="font-semibold">{ch.name}</span>
                       {ch.description && (

@@ -2,12 +2,16 @@
 Agent Workflow — Resolve Aí
 
 LangGraph StateGraph that wires all agents into an end-to-end pipeline.
-Entry point: run_chat(message) → ChatResult.
+Entry points:
+  run_chat(message) → ChatResult          (blocking, for tests)
+  stream_chat(message, queue) → None      (SSE-friendly, puts events in queue)
 """
 
 import logging
+import queue as queue_module
+import threading
 import time
-from typing import TypedDict
+from typing import Generator, TypedDict
 
 from langgraph.graph import END, StateGraph
 
@@ -154,26 +158,26 @@ def _build_graph() -> StateGraph:
 _compiled_graph = _build_graph().compile()
 
 
-# --- Public API ---------------------------------------------------------------
+# --- Stage messages shown to the user while the pipeline runs ----------------
+
+_STAGE_MESSAGES: dict[str, str] = {
+    "orchestrator": "Entendendo sua situação...",
+    "retrieval": "Consultando o Código de Defesa do Consumidor...",
+    "legal_analysis": "Analisando seus direitos...",
+    "strategy": "Montando o plano de ação...",
+    "response": "Preparando sua resposta...",
+}
 
 
-def run_chat(message: str) -> ChatResult:
-    """Run the full agent pipeline for a user message.
+# --- Shared result builder ----------------------------------------------------
 
-    This is the main entry point called by the API layer.
-    """
-    start = time.perf_counter()
 
-    initial_state: ResolveAiState = {"user_message": message}
-    final_state = _compiled_graph.invoke(initial_state)
-
-    elapsed_ms = (time.perf_counter() - start) * 1000
-
+def _build_result(final_state: dict, elapsed_ms: float) -> ChatResult:
+    """Build a ChatResult from a completed LangGraph final state."""
     analysis = final_state.get("legal_analysis")
     strategy = final_state.get("strategy")
     rag_chunks = final_state.get("rag_chunks", [])
 
-    # Build source list from RAG chunks
     sources = []
     for chunk in rag_chunks:
         source_name = "CDC" if chunk.source_type == "cdc" else "STJ"
@@ -184,13 +188,6 @@ def run_chat(message: str) -> ChatResult:
             elif chunk.capitulo:
                 label += f" - {chunk.capitulo}"
         sources.append(label)
-
-    logger.info(
-        "Chat pipeline completed in %.0fms (intent=%s, sources=%d)",
-        elapsed_ms,
-        final_state.get("intent"),
-        len(sources),
-    )
 
     return ChatResult(
         response=final_state.get("final_response", ""),
@@ -203,3 +200,90 @@ def run_chat(message: str) -> ChatResult:
             "latency_ms": round(elapsed_ms),
         },
     )
+
+
+# --- Public API ---------------------------------------------------------------
+
+
+def run_chat(message: str) -> ChatResult:
+    """Run the full agent pipeline for a user message (blocking)."""
+    start = time.perf_counter()
+    initial_state: ResolveAiState = {"user_message": message}
+    final_state = _compiled_graph.invoke(initial_state)
+    elapsed_ms = (time.perf_counter() - start) * 1000
+
+    result = _build_result(dict(final_state), elapsed_ms)
+    logger.info(
+        "Chat pipeline completed in %.0fms (intent=%s, sources=%d)",
+        elapsed_ms,
+        final_state.get("intent"),
+        len(result["sources"]),
+    )
+    return result
+
+
+def _run_pipeline_into_queue(message: str, q: queue_module.Queue) -> None:
+    """Run LangGraph pipeline in a thread, pushing SSE events into queue."""
+    start = time.perf_counter()
+    initial_state: ResolveAiState = {"user_message": message}
+    accumulated: dict = {}
+
+    try:
+        for event in _compiled_graph.stream(initial_state, stream_mode="updates"):
+            node_name = next(iter(event))
+            accumulated.update(event[node_name])
+            stage = _STAGE_MESSAGES.get(node_name)
+            if stage:
+                q.put({"type": "stage", "stage": stage})
+
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        result = _build_result(accumulated, elapsed_ms)
+
+        # Convert dataclasses to dicts for JSON serialisation
+        import dataclasses
+
+        def _to_dict(obj):  # type: ignore[return]
+            if dataclasses.is_dataclass(obj):
+                return dataclasses.asdict(obj)
+            if isinstance(obj, list):
+                return [_to_dict(i) for i in obj]
+            return obj
+
+        q.put({
+            "type": "done",
+            "data": {
+                "response": result["response"],
+                "analysis": _to_dict(result["analysis"]),
+                "strategy": _to_dict(result["strategy"]),
+                "sources": result["sources"],
+                "metadata": result["metadata"],
+            },
+        })
+    except Exception:
+        logger.exception("Streaming pipeline failed")
+        q.put({"type": "error", "message": "Ocorreu um erro. Tente novamente."})
+    finally:
+        q.put(None)  # sentinel — stream is done
+
+
+def stream_chat(message: str) -> Generator[dict, None, None]:
+    """Yield SSE event dicts as the pipeline progresses.
+
+    Each yielded dict has a 'type' key:
+      - {"type": "stage", "stage": "<human-readable step>"}
+      - {"type": "done",  "data": <ChatResult as dict>}
+      - {"type": "error", "message": "<error text>"}
+    """
+    q: queue_module.Queue = queue_module.Queue()
+    thread = threading.Thread(
+        target=_run_pipeline_into_queue,
+        args=(message, q),
+        daemon=True,
+    )
+    thread.start()
+
+    while True:
+        item = q.get()
+        if item is None:
+            break
+        yield item

@@ -6,12 +6,15 @@ All REST endpoints:
 - GET  /api/health — service health check
 """
 
+import asyncio
+import json
 import logging
 
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from agents.workflow import run_chat
+from agents.workflow import run_chat, stream_chat
 from config import settings
 
 router = APIRouter(prefix="/api")
@@ -145,6 +148,30 @@ async def chat(request: ChatRequest) -> ChatResponse:
             "model": settings.gemini_model,
             **result.get("metadata", {}),
         },
+    )
+
+
+@router.post("/chat/stream")
+async def chat_stream(request: ChatRequest) -> StreamingResponse:
+    """Stream the agent pipeline as Server-Sent Events.
+
+    Emits 'stage' events as each pipeline node completes, then a final
+    'done' event with the full structured response.
+    """
+    async def event_generator():
+        loop = asyncio.get_event_loop()
+        gen = stream_chat(request.message)
+
+        while True:
+            item: dict | None = await loop.run_in_executor(None, next, gen, None)
+            if item is None:
+                break
+            yield f"data: {json.dumps(item, ensure_ascii=False)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
