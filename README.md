@@ -144,12 +144,12 @@ uv run pytest -v
 
 ## Project Status
 
-**Current phase:** Fase A — Sprint A2 in progress 🔄
+**Current phase:** Fase A — Sprint A2 complete ✅ · Fase B next
 
 | Phase | Sprint | Status | Description |
 |---|---|:---:|---|
 | **Fase A** | A1 | ✅ Done | Next.js frontend + SSE streaming + visual cards |
-| **Fase A** | A2 | 🔄 In progress | structlog ✅ · LangSmith wiring ✅ · ADR-012 ✅ |
+| **Fase A** | A2 | ✅ Done | structlog · LangSmith (prod) · tema emerald · Gemini 3.1 Flash |
 | **Fase B** | — | 🔲 Planned | RAG quality (re-ranking, eval harness) |
 | **Fase C** | — | 🔲 Planned | LGPD + auth + conversation history |
 | **Fase D** | — | 🔲 Planned | gov.br integration + audio |
