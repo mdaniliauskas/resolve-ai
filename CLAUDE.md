@@ -12,8 +12,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Install dependencies (UV manages the virtualenv automatically)
 uv sync
 
-# Run the Gradio frontend (http://localhost:7860, auth: visitante/resolveai)
-uv run python frontend/app.py
+# Run the Gradio frontend — legacy only (http://localhost:7860, auth: visitante/resolveai)
+uv run python frontend-legacy/app.py
 
 # Run the FastAPI backend only (http://localhost:8000/docs)
 uv run uvicorn api.main:app --reload
@@ -44,7 +44,7 @@ Copy `.env.example` to `.env` and set `GOOGLE_API_KEY` before running.
 Five-agent LangGraph pipeline triggered by `POST /api/chat`:
 
 ```
-Gradio UI (frontend/app.py)
+Gradio UI (frontend-legacy/app.py) — legacy
   → FastAPI (api/routes.py)
     → LangGraph StateGraph (agents/workflow.py)
         1. orchestrator_node  — classifies intent: consumer_complaint | general_question | greeting | out_of_scope
