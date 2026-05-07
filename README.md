@@ -53,7 +53,7 @@ User → Next.js 16 (Cloud Run)
 
 | Layer | Technology |
 |---|---|
-| **LLM** | Gemini Flash (Google GenAI SDK) |
+| **LLM** | Gemini 3.1 Flash (Google GenAI SDK) |
 | **Agent Orchestration** | LangGraph |
 | **RAG / Embeddings** | ChromaDB + `gemini-embedding-001` (Cosine Distance) |
 | **Backend** | Python 3.12 + FastAPI + UV |
@@ -144,12 +144,12 @@ uv run pytest -v
 
 ## Project Status
 
-**Current phase:** Fase A — Sprint A1 complete ✅
+**Current phase:** Fase A — Sprint A2 in progress 🔄
 
 | Phase | Sprint | Status | Description |
 |---|---|:---:|---|
 | **Fase A** | A1 | ✅ Done | Next.js frontend + SSE streaming + visual cards |
-| **Fase A** | A2 | 🔲 Next | LangSmith observability + structlog |
+| **Fase A** | A2 | 🔄 In progress | structlog ✅ · LangSmith wiring ✅ · ADR-012 ✅ |
 | **Fase B** | — | 🔲 Planned | RAG quality (re-ranking, eval harness) |
 | **Fase C** | — | 🔲 Planned | LGPD + auth + conversation history |
 | **Fase D** | — | 🔲 Planned | gov.br integration + audio |
