@@ -101,4 +101,13 @@ docker build -f Dockerfile.web -t southamerica-east1-docker.pkg.dev/[PROJECT_ID]
 
 ---
 
-*Substitua `[PROJECT_ID]` pelo ID real do projeto Google Cloud.*
+---
+
+## URLs de produção
+
+| Serviço | URL |
+|---------|-----|
+| `resolve-ai-api` | https://resolve-ai-444080754389.southamerica-east1.run.app |
+| `resolve-ai-web` | https://resolve-ai-web-444080754389.southamerica-east1.run.app |
+
+> **PROJECT_ID:** `resolve-ai-daniliauskas` · **Região:** `southamerica-east1`
