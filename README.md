@@ -2,32 +2,34 @@
 
 > **Seu assistente inteligente para dúvidas sobre o Código de Defesa do Consumidor**
 
-A multi-agent chatbot that helps Brazilian consumers understand their rights under the *Código de Defesa do Consumidor* (CDC / Law 8.078/1990) and get concrete guidance on how to resolve their issues.
+A multi-agent chatbot that helps Brazilian consumers understand their rights under the *Código de Defesa do Consumidor* (CDC / Law 8.078/1990) and get concrete, empathetic guidance on resolving their issues.
+
+🔗 **Live:** https://resolve-ai-web-444080754389.southamerica-east1.run.app
 
 ---
 
 ## The Problem
 
-Brazilian consumers frequently **don't know whether their issue is covered by the CDC**, where to start a complaint, which channel has the best chance of resolution, or when to escalate to formal instances. The result: lost time, frustration, and unexercised rights.
+Brazilian consumers frequently **don't know whether their issue is covered by the CDC**, where to start a complaint, which channel has the best chance of resolution, or when to escalate. The result: lost time, frustration, and unexercised rights.
 
 ## The Solution
 
-**Resolve Aí** is an intelligent chatbot with a **multi-agent + RAG architecture** that:
+**Resolve Aí** is an intelligent chatbot with a **multi-agent + RAG pipeline** that:
 
 1. **Analyzes** whether the case falls under the CDC and identifies applicable articles
 2. **Classifies** the problem type (product defect, improper billing, false advertising, etc.)
-3. **Plans** a personalized resolution strategy
-4. **Guides** with concrete steps and links to the most appropriate channels
+3. **Plans** a personalized resolution strategy with concrete channels and steps
+4. **Responds** in empathetic, accessible language — no legal jargon
 
 ---
 
 ## Architecture
 
 ```
-User → Chat Interface (Gradio)
-             │
+User → Next.js 16 (Cloud Run)
+             │  SSE streaming
              ▼
-       FastAPI REST API
+       FastAPI REST API (Cloud Run)
              │
              ▼
     Orchestrator Agent ──→ classifies intent
@@ -40,7 +42,7 @@ User → Chat Interface (Gradio)
       Strategy Agent ──→ builds action plan
              │
              ▼
-      Response Agent ──→ formats final response
+      Response Agent ──→ formats final response (streaming via SSE)
 ```
 
 > Full architecture with Mermaid diagrams → [`projetos/resolve-ai/ARCHITECTURE.md`](./projetos/resolve-ai/ARCHITECTURE.md)
@@ -51,13 +53,13 @@ User → Chat Interface (Gradio)
 
 | Layer | Technology |
 |---|---|
-| **LLM** | Gemini 3.1 Flash Lite (Google GenAI SDK `google-genai`) |
+| **LLM** | Gemini Flash (Google GenAI SDK) |
 | **Agent Orchestration** | LangGraph |
 | **RAG / Embeddings** | ChromaDB + `gemini-embedding-001` (Cosine Distance) |
-| **Backend** | Python 3.12 + FastAPI |
-| **Frontend** | Gradio 6 |
-| **Package Manager** | UV |
-| **Deploy** | Docker + Google Cloud Run (Safeguarded) |
+| **Backend** | Python 3.12 + FastAPI + UV |
+| **Frontend** | Next.js 16 + Tailwind CSS 4 + shadcn/ui |
+| **Streaming** | Server-Sent Events (SSE) |
+| **Deploy** | Docker + Google Cloud Run (`southamerica-east1`) |
 
 ---
 
@@ -65,30 +67,30 @@ User → Chat Interface (Gradio)
 
 ```
 resolve-ai/
-├── agents/                  # AI agents (LangGraph nodes)
+├── agents/                  # LangGraph pipeline nodes
 │   ├── llm_client.py        # Centralized Gemini SDK wrapper
 │   ├── orchestrator.py      # Intent classification and routing
 │   ├── legal_analysis.py    # CDC article identification via RAG
 │   ├── strategy.py          # Resolution channel planning
 │   ├── response.py          # Final response formatting
-│   └── workflow.py          # LangGraph StateGraph orchestration
+│   └── workflow.py          # StateGraph + SSE streaming
 ├── rag/                     # RAG pipeline
-│   ├── ingest.py            # Document ingestion (download → chunk → embed → index)
+│   ├── ingest.py            # Download → chunk → embed → index
 │   └── retrieval.py         # Similarity search + re-ranking
 ├── api/                     # FastAPI backend
-│   ├── main.py              # App entry point + middleware
-│   └── routes.py            # /api/chat, /api/health endpoints
-├── frontend/                # Gradio chat interface
-│   └── app.py               # Chat UI with legal disclaimer
+│   ├── main.py              # App entry point + CORS middleware
+│   └── routes.py            # /api/chat, /api/chat/stream, /api/health
+├── web/                     # Next.js 16 frontend
+│   ├── app/                 # App Router pages
+│   ├── components/chat/     # ChatInterface, MessageBubble, ExampleCards
+│   └── types/chat.ts        # Shared TypeScript types
 ├── data/
-│   └── cdc/                 # CDC source documents (downloaded at setup, not committed)
-├── tests/                   # Unit + integration tests (32 tests)
-├── evaluation/              # Golden test set (10 CDC scenarios)
-├── config.py                # Single source of configuration (reads from .env)
-├── pyproject.toml           # Dependencies (managed with UV)
-├── Dockerfile               # Production container image setup
-├── deploy.md                # Cloud Run deployment instructions and safeguards
-└── .env.example             # Environment variable template
+│   └── chroma_db/           # Baked vector database (stateless Cloud Run)
+├── config.py                # Single source of configuration
+├── pyproject.toml           # Python dependencies (UV)
+├── Dockerfile               # Backend container (FastAPI)
+├── Dockerfile.web           # Frontend container (Next.js standalone)
+└── deploy.md                # Cloud Run deployment guide
 ```
 
 ---
@@ -97,37 +99,34 @@ resolve-ai/
 
 ### Prerequisites
 
-- Python 3.12+
-- [UV](https://docs.astral.sh/uv/) (package manager)
-- [Gemini API key](https://aistudio.google.com/) **or** [Ollama](https://ollama.com/) for local LLM
+- Python 3.12+ and [UV](https://docs.astral.sh/uv/)
+- Node.js 20+
+- [Gemini API key](https://aistudio.google.com/)
 
-### Setup
+### Run locally
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/mdaniliauskas/resolve-ai.git
 cd resolve-ai
 
-# 2. Install dependencies (UV creates the virtualenv automatically)
+# Backend
+cp .env.example .env        # add your GOOGLE_API_KEY
 uv sync
-
-# 3. Configure environment
-cp .env.example .env
-# Edit .env with your GOOGLE_API_KEY
-
-# 4. Start the chat interface (uses Auth: visitante/resolveai)
-uv run python frontend/app.py
-# → http://localhost:7860
-
-# Or start the API only
 uv run uvicorn api.main:app --reload
 # → http://localhost:8000/docs
 
-# Run tests
-uv run pytest -v
+# Frontend (separate terminal)
+cd web
+npm install
+npm run dev
+# → http://localhost:3000
 ```
 
-> Full setup guide → [`projetos/resolve-ai/SETUP.md`](./projetos/resolve-ai/SETUP.md)
+### Run tests
+
+```bash
+uv run pytest -v
+```
 
 ---
 
@@ -136,26 +135,24 @@ uv run pytest -v
 | Document | Description |
 |---|---|
 | [ARCHITECTURE.md](./projetos/resolve-ai/ARCHITECTURE.md) | Detailed architecture with Mermaid diagrams |
-| [MVP_SPEC.md](./projetos/resolve-ai/MVP_SPEC.md) | Technical spec: API, prompt templates, acceptance criteria |
-| [TECH_DECISIONS.md](./projetos/resolve-ai/TECH_DECISIONS.md) | Architecture Decision Records (ADRs) |
-| [DEVELOPMENT_GUIDE.md](./projetos/resolve-ai/DEVELOPMENT_GUIDE.md) | Dev philosophy, code patterns, and senior tips |
-| [ROADMAP.md](./projetos/resolve-ai/ROADMAP.md) | Roadmap with milestones and acceptance criteria |
-| [SETUP.md](./projetos/resolve-ai/SETUP.md) | Step-by-step environment setup guide |
+| [TECH_DECISIONS.md](./projetos/resolve-ai/TECH_DECISIONS.md) | Architecture Decision Records (ADR-001 to ADR-014) |
+| [ROADMAP.md](./projetos/resolve-ai/ROADMAP.md) | 4-phase roadmap (A/B/C/D) with sprint criteria |
+| [DEVELOPMENT_GUIDE.md](./projetos/resolve-ai/DEVELOPMENT_GUIDE.md) | Dev philosophy, code patterns |
+| [deploy.md](./deploy.md) | Cloud Run deployment step-by-step |
 
 ---
 
 ## Project Status
 
-**Current phase:** Enriched & Deployed (Sprint 6 complete ✅)
+**Current phase:** Fase A — Sprint A1 complete ✅
 
-| Phase | Status | Description |
-|---|:---:|---|
-| **Sprint 1** | ✅ Done | Project scaffold, RAG pipeline, golden test set |
-| **Sprint 2** | ✅ Done | Multi-agent pipeline (orchestrator, legal, strategy, response) |
-| **Sprint 3** | ✅ Done | Gradio chat UI, legal disclaimer, README polish |
-| **Sprint 4 (RAG)** | ✅ Done | Migrated to `gemini-embedding-001` (90% Precision Score) |
-| **Sprint 5 (Deploy)** | ✅ Done | Google Cloud Run Deploy + Safeguards (Auth & Token Caps) |
-| **Scale** | 🔲 Planned | gov.br integration + Auto-generated letters + Mobile |
+| Phase | Sprint | Status | Description |
+|---|---|:---:|---|
+| **Fase A** | A1 | ✅ Done | Next.js frontend + SSE streaming + visual cards |
+| **Fase A** | A2 | 🔲 Next | LangSmith observability + structlog |
+| **Fase B** | — | 🔲 Planned | RAG quality (re-ranking, eval harness) |
+| **Fase C** | — | 🔲 Planned | LGPD + auth + conversation history |
+| **Fase D** | — | 🔲 Planned | gov.br integration + audio |
 
 ---
 
@@ -163,7 +160,7 @@ uv run pytest -v
 
 Based on **Law 8.078/1990** (Código de Defesa do Consumidor) and SNDC regulations.
 
-> ⚠️ Resolve Aí provides informational guidance and **does not replace professional legal counsel**. For complex cases, consulting a lawyer is recommended.
+> ⚠️ Resolve Aí provides informational guidance and **does not replace professional legal counsel**.
 
 ---
 

@@ -276,6 +276,31 @@ Precisamos de um modelo de embedding para o pipeline RAG.
 
 ---
 
+## ADR-014: Deploy Frontend — Cloud Run (mesmo projeto do backend)
+
+### Contexto
+Com a migração de Gradio → Next.js 16, precisávamos decidir onde hospedar o frontend. Opções consideradas: Vercel (plataforma otimizada para Next.js) vs. Google Cloud Run (mesma infraestrutura do backend).
+
+### Decisão
+**Cloud Run** para o frontend (`resolve-ai-web`), mantendo tudo no mesmo projeto GCP (`resolve-ai-daniliauskas`, região `southamerica-east1`).
+
+### Alternativas rejeitadas
+- **Vercel:** Simplificaria o deploy do Next.js, mas introduziria um segundo provedor de cloud, custos separados, e configuração de CORS cross-origin permanente. Para o estágio atual (pré-monetização), a complexidade adicional não se justifica.
+
+### Consequências
+- Deploy via `Dockerfile.web` com `output: "standalone"` do Next.js — sem `node_modules` em produção
+- CORS configurado no backend com a URL estável do Cloud Run
+- Um único projeto GCP, faturamento centralizado, IAM simples
+- Reconsiderar Vercel na Fase C se houver necessidade de edge functions, ISR avançado ou CDN global
+
+### URLs de produção
+- Backend: `https://resolve-ai-444080754389.southamerica-east1.run.app`
+- Frontend: `https://resolve-ai-web-444080754389.southamerica-east1.run.app`
+
+### Status: ✅ Aprovado e implementado (Sprint A1, 2026-05-06)
+
+---
+
 ## Decisões em Aberto
 
 | ID | Decisão | Status | Prazo |
@@ -285,7 +310,6 @@ Precisamos de um modelo de embedding para o pipeline RAG.
 | ADR-011 | CI/CD (GitHub Actions vs. Cloud Build) | 🔲 Não iniciado | Fase B |
 | ADR-012 | Observabilidade (LangSmith vs. Phoenix/Arize self-hosted) | 🔲 Não iniciado | Fase A |
 | ADR-013 | Auth de usuários (Supabase Auth vs. Clerk) | 🔲 Não iniciado | Fase C |
-| ADR-014 | Deploy frontend (Vercel vs. Cloud Run junto com backend) | 🔲 Não iniciado | Fase A |
 
 ---
 

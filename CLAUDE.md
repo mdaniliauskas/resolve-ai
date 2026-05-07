@@ -92,7 +92,19 @@ Project-level behavioral skills live in [`.agent/skills/`](.agent/skills/). They
 | [`human-commits`](.agent/skills/human-commits/SKILL.md) | Every git commit |
 | [`dev-journal`](.agent/skills/dev-journal/SKILL.md) | End of each sprint or when explicitly requested |
 | [`check-latest-versions`](.agent/skills/check-latest-versions/SKILL.md) | Any time a library, API, SDK, MCP server, model ID, or Docker image is added, updated, or referenced |
+| [`checkpoint`](.agent/skills/checkpoint/SKILL.md) | End of any productive session — always update `SESSION_STATE.md` before closing |
+
+## Session continuity
+
+**Always read `SESSION_STATE.md` at the start of a new session.** It contains the last delivered state, production URLs, pending tasks, and open ADRs. Update it before closing every session.
 
 ## Deployment
 
-Docker image bakes in ChromaDB + CDC data for stateless Cloud Run deployment. The container exposes port `8080` (set `GRADIO_SERVER_PORT=8080`). See `deploy.md` for the full Cloud Run procedure.
+Two services on Google Cloud Run (`resolve-ai-daniliauskas`, region `southamerica-east1`):
+
+| Service | Image | URL |
+|---------|-------|-----|
+| `resolve-ai` | FastAPI backend | https://resolve-ai-444080754389.southamerica-east1.run.app |
+| `resolve-ai-web` | Next.js frontend | https://resolve-ai-web-444080754389.southamerica-east1.run.app |
+
+See `deploy.md` for full deployment procedure.
