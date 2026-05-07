@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # LLM provider: "gemini" or "ollama"
     llm_provider: str = "gemini"
     google_api_key: str = ""
-    gemini_model: str = "gemini-3.1-flash-lite-preview"
+    gemini_model: str = "gemini-3.1-flash"
 
     # Ollama (local development)
     ollama_base_url: str = "http://localhost:11434"
@@ -38,6 +38,11 @@ class Settings(BaseSettings):
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     api_cors_origins: str = "http://localhost:3000"
+
+    # LangSmith (observability — set LANGSMITH_TRACING=true to enable)
+    langsmith_tracing: str = "false"
+    langsmith_api_key: str = ""
+    langsmith_project: str = "resolve-ai"
 
     # App
     environment: str = "development"

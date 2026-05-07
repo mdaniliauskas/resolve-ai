@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import router
 from config import settings
+from logging_config import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Startup and shutdown events for the application."""
-    logging.basicConfig(level=settings.log_level)
+    configure_logging()
     logger.info("Resolve Aí API starting (env=%s)", settings.environment)
     yield
     logger.info("Resolve Aí API shutting down")
